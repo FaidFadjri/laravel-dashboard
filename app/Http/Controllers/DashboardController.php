@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
+use Illuminate\Support\Js;
+use Yajra\DataTables\DataTables;
 
 class DashboardController extends Controller
 {
@@ -17,10 +19,6 @@ class DashboardController extends Controller
         $currentMonthData = DB::table('tb_checksheet')->select('*')
             ->where('created_at', '>=', $startDate)
             ->where('created_at', '<=', $endDate)
-            ->orderBy('created_at')
-            ->get()->toArray();
-
-        $allData = DB::table('tb_checksheet')->select('*')
             ->orderBy('created_at')
             ->get()->toArray();
 
@@ -48,7 +46,7 @@ class DashboardController extends Controller
             array_push($shetnama, $item->premises);
         }
 
-        foreach ($allData as $item) {
+        foreach ($currentMonthData as $item) {
             if ($item->kondisi == 'baik') {
                 array_push($baik, $item);
             } else if ($item->kondisi == 'kurang baik') {
@@ -76,6 +74,122 @@ class DashboardController extends Controller
         $components['data']         = $data;
         $components['ceksheet']     = $ceksheet;
         $components['wilayah']      = $wilayah;
+        $components['active']       = 'dashboard';
         return view('pages/menu', $components);
+    }
+
+    public function load_barchart()
+    {
+        if (request()->ajax()) {
+
+            $startDate = date('Y-m-01');
+            $endDate   = date('Y-m-31');
+
+            //---- Ambil data Wilayah Berdasarkan parameter
+            $premises = request()->get('premises');
+            $kondisi  = request()->get('kondisi');
+
+            $data  = DB::table('tb_user')
+                ->join('tb_checksheet', 'tb_user.id', '=', 'tb_checksheet.id_user', 'inner')
+                ->select('*')
+                ->where('kondisi', '=', $kondisi)
+                ->where('premises', '=', $premises)
+                ->where('created_at', '>=', $startDate)
+                ->where('created_at', '<=', $endDate)
+                ->get()->toArray();
+
+            $semuaWilayah = DB::table('tb_outlet')
+                ->distinct('wilayah')
+                ->groupBy('wilayah')
+                ->get()->toArray();
+
+            for ($i = 0; $i < sizeof($semuaWilayah); $i++) {
+                $resultGroupBy = array_keys(array_keys(array_combine(array_keys($data), array_column($data, 'wilayah')), $semuaWilayah[$i]->wilayah));
+                // $result[$semuaWilayah[$i]->wilayah] = sizeof($resultGroupBy);
+                $result[$i] = [
+                    'label' => $semuaWilayah[$i]->wilayah,
+                    'value' => sizeof($resultGroupBy)
+                ];
+            }
+
+            return json_encode(array(
+                'code'      => 200,
+                'message'   => 'Berhasil Mendapatkan Data',
+                'data'      => $result
+            ));
+        }
+    }
+
+    public function datatable()
+    {
+        $components = [
+            'active' => 'datatable'
+        ];
+
+        return view('pages.datatable', $components);
+    }
+
+    public function datatable_with_parameter($premises, $category, $wilayah)
+    {
+        $components = [
+            'active'    => 'datatable',
+            'premises'  => $premises,
+            'kondisi'   => $category,
+            'wilayah'   => $wilayah
+        ];
+
+        return view('pages.datatable', $components);
+    }
+
+
+    public function load_datatable()
+    {
+
+        $date               = request()->get('date');
+        $parameter_premises = request()->get('parameter_premises');
+        $parameter_kondisi  = request()->get('parameter_kondisi');
+        $parameter_wilayah  = request()->get('parameter_wilayah');
+
+
+        $data = DB::table('tb_checksheet')->select(array('img', 'kondisi_smw', 'catatan_smw', 'nama_smw', 'nama_pusat', 'catatan_pusat', 'tb_checksheet.id', 'wilayah', 'cabang', 'outlet', 'premises', 'kategori', 'kondisi', 'verifikasi', DB::raw('DATE(created_at) AS submitDate')))
+            ->join('tb_user', 'tb_checksheet.id_user', '=', 'tb_user.id');
+
+        if ($date) {
+            $data->where('created_at', '>=', $date);
+        }
+
+        if ($parameter_premises || $parameter_kondisi || $parameter_wilayah) {
+            $startDate = date('Y-m-01');
+            $endDate   = date('Y-m-31');
+
+            $data->where('premises', '=', $parameter_premises)
+                ->where('kondisi', '=', $parameter_kondisi)
+                ->where('created_at', '>=', $startDate)
+                ->where('created_at', '<=', $endDate)
+                ->where('wilayah', '=', $parameter_wilayah);
+        }
+
+        return DataTables::of($data->get())
+            ->addIndexColumn()
+            ->addColumn('action', function ($data) {
+                $html = '<button class="btn btn-danger" data-id="' . $data->id . '"><ion-icon name="trash"></ion-icon></button>';
+                $html .= '<button class="btn btn-primary btn-detail" style="margin-left:10px" data-id="' . $data->id . '"><ion-icon name="eye-outline"></ion-icon></button>';
+                return $html;
+            })->make(true);
+    }
+
+    public function get_detail()
+    {
+        if (request()->ajax()) {
+
+            $checkId = request()->get('id');
+            $data    = DB::table('tb_checksheet')->select('*')->where('id', $checkId)->first();
+
+            return json_encode(array(
+                'code'      => 200,
+                'message'   => 'Berhasil Mendapatkan Data Detail',
+                'data'      => $data
+            ));
+        }
     }
 }

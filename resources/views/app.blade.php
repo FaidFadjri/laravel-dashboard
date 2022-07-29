@@ -7,6 +7,8 @@
     <meta name="author" content="Softnio">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
     <meta name="description" content="Dashboard System">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
     <!-- Fav Icon  -->
     <link rel="shortcut icon" href="./images/favicon.png">
     <!-- Page Title  -->
@@ -23,10 +25,26 @@
     <script src="https://cdn.amcharts.com/lib/5/themes/Animated.js"></script>
     <script src="https://cdn.amcharts.com/lib/5/xy.js"></script>
 
+    {{-- Ionicons --}}
+    <script type="module" src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@5.5.2/dist/ionicons/ionicons.js"></script>
+
     {{-- JQUERY --}}
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"
         integrity="sha256-/xUj+3OJU5yExlq6GSYGSHk7tPXikynS7ogEvDej/m4=" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js"
+        integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous">
+    </script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"
+        integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous">
+    </script>
 
+    {{-- Datatables --}}
+    <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap4.min.js"></script>
+    <script src="https://cdn.datatables.net/fixedheader/3.2.4/js/dataTables.fixedHeader.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap4.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.2.4/css/fixedHeader.bootstrap4.min.css">
 </head>
 
 <body class="nk-body bg-lighter ">
@@ -70,14 +88,14 @@
                                 </div>
                             </div>
                             <ul class="nk-menu nk-menu-main ui-s2">
-                                <li class="nk-menu-item active">
+                                <li class="nk-menu-item {{ $active == 'dashboard' ? 'active' : '' }}">
                                     <a href="/" class="nk-menu-link">
                                         <span class="nk-menu-text">Dashboard</span>
                                     </a>
                                 </li>
-                                <li class="nk-menu-item">
-                                    <a href="{{ url('check/1') }}" class="nk-menu-link">
-                                        <span class="nk-menu-text">Outlet</span>
+                                <li class="nk-menu-item {{ $active == 'datatable' ? 'active' : '' }}">
+                                    <a href="{{ url('datatable') }}" class="nk-menu-link">
+                                        <span class="nk-menu-text">Datatable</span>
                                     </a>
                                 </li>
                             </ul><!-- .nk-menu -->

@@ -53,18 +53,16 @@
 
                 <div class="tab-content">
                     <div class="row">
-                        <div class="col-6">
+                        <div class="col-sm-12 col-md-6">
                             <div id="chartdiv" class="chart"></div>
                         </div>
-                        <div class="col-6">
+                        <div class="col-sm-12 col-md-6">
                             <div id="barChart" class="chart"></div>
                         </div>
                     </div>
                 </div>
             </div>
         </div><!-- .card-preview -->
-
-
     </div>
 
     <style>
@@ -158,7 +156,24 @@
                     if (chart) {
                         chart.dispose();
                     }
-                    showBar(premises, category);
+
+                    //---- Panggil AJAX JQUERY
+                    $.ajax({
+                        headers: {
+                            'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                        },
+                        type: "POST",
+                        url: "/load_barchart",
+                        data: {
+                            kondisi: category,
+                            premises: premises
+                        },
+                        dataType: "json",
+                        success: function(response) {
+                            const data = response.data;
+                            showBar(premises, category, data);
+                        }
+                    });
                 });
 
                 series.get("colors").set("colors", [
@@ -229,13 +244,12 @@
 
 
     <script>
-        function showBar(premises, category) {
+        function showBar(premises, category, array_result) {
             am5.ready(function() {
                 // Set themes
                 root2.setThemes([
                     am5themes_Animated.new(root2)
                 ]);
-
 
                 // Create chart
                 // https://www.amcharts.com/docs/v5/charts/xy-chart/
@@ -293,7 +307,8 @@
                 }));
 
                 series.columns.template.events.on("click", function(ev) {
-                    console.log(ev.target.dataItem.dataContext.label);
+                    var wilayah = ev.target.dataItem.dataContext.label;
+                    location.href = `/datatable/${premises}/${category}/${wilayah}`;
                 });
 
                 series.columns.template.setAll({
@@ -313,22 +328,7 @@
 
 
                 // Set data
-                var data = [{
-                    label: "USA",
-                    value: 2025
-                }, {
-                    label: "China",
-                    value: 1882
-                }, {
-                    label: "Japan",
-                    value: 1809
-                }, {
-                    label: "Germany",
-                    value: 1322
-                }, {
-                    label: "UK",
-                    value: 1122
-                }];
+                var data = array_result;
 
                 xAxis.data.setAll(data);
                 series.data.setAll(data);
