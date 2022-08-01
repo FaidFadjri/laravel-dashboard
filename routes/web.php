@@ -15,11 +15,13 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('/', [DashboardController::class, 'index']);
+Route::get('cabang/{wilayah}/{kondisi}/{premises}', [DashboardController::class, 'get_cabang']);
+Route::get('outlet/{cabang}/{kondisi}/{premises}', [DashboardController::class, 'get_outlet']);
 Route::get('datatable', [DashboardController::class, 'datatable']);
 
 
 //------ Additional Routes
-Route::get('datatable/{premises}/{kondisi}/{wilayah}', [DashboardController::class, 'datatable_with_parameter']);
+Route::get('datatable/{premises}/{kondisi}/{outlet}', [DashboardController::class, 'datatable_with_parameter']);
 
 
 //------ AJAX Routes

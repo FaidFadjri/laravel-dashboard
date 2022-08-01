@@ -120,6 +120,72 @@ class DashboardController extends Controller
         }
     }
 
+
+
+    public function get_cabang($wilayah, $kondisi, $premises)
+    {
+        $startDate   = date('Y-m-01');
+        $endDate     = date('Y-m-31');
+        $checksheet  = DB::table('tb_user')
+            ->join('tb_checksheet', 'tb_user.id', '=', 'tb_checksheet.id_user', 'inner')
+            ->select('*')
+            ->where('kondisi', '=', $kondisi)
+            ->where('premises', '=', $premises)
+            ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
+            ->get()->toArray();
+        $getCabang   = DB::table('tb_outlet')->select('*')->where('wilayah', '=', $wilayah)->groupBy('cabang')->get()->toArray();
+        $data = array();
+        foreach ($getCabang as $index => $value) {
+            $resultGroupBy = array_keys(array_keys(array_combine(array_keys($checksheet), array_column($checksheet, 'cabang')), $getCabang[$index]->outlet));
+            $data[$index] = [
+                'cabang' => $getCabang[$index]->cabang,
+                'label'  => $getCabang[$index]->outlet,
+                'value'  => sizeof($resultGroupBy)
+            ];
+        }
+
+        $components['active']   = 'dashboard';
+        $components['data']     = $data;
+        $components['premises'] = $premises;
+        $components['category'] = $kondisi;
+        return view('pages.cabang', $components);
+    }
+
+    public function get_outlet($cabang, $kondisi, $premises)
+    {
+        $startDate   = date('Y-m-01');
+        $endDate     = date('Y-m-31');
+        $checksheet  = DB::table('tb_user')
+            ->join('tb_checksheet', 'tb_user.id', '=', 'tb_checksheet.id_user', 'inner')
+            ->select('*')
+            ->where('kondisi', '=', $kondisi)
+            ->where('premises', '=', $premises)
+            ->where('created_at', '>=', $startDate)
+            ->where('created_at', '<=', $endDate)
+            ->get()->toArray();
+
+        $getOutlet   = DB::table('tb_outlet')->select('*')->where('cabang', '=', $cabang)->groupBy('outlet')->get()->toArray();
+        $data = array();
+        foreach ($getOutlet as $index => $value) {
+            $resultGroupBy = array_keys(array_keys(array_combine(array_keys($checksheet), array_column($checksheet, 'outlet')), $getOutlet[$index]->outlet));
+            $data[$index] = [
+                'label' => $getOutlet[$index]->outlet,
+                'value' => sizeof($resultGroupBy)
+            ];
+        }
+
+        $components['active'] = 'dashboard';
+        $components['data']   = $data;
+        $components['premises'] = $premises;
+        $components['category'] = $kondisi;
+        return view('pages.outlet', $components);
+    }
+
+
+
+    //--------------- DATATABLE ----------------//
+
     public function datatable()
     {
         $components = [
@@ -129,13 +195,13 @@ class DashboardController extends Controller
         return view('pages.datatable', $components);
     }
 
-    public function datatable_with_parameter($premises, $category, $wilayah)
+    public function datatable_with_parameter($premises, $category, $outlet)
     {
         $components = [
             'active'    => 'datatable',
             'premises'  => $premises,
             'kondisi'   => $category,
-            'wilayah'   => $wilayah
+            'outlet'    => $outlet
         ];
 
         return view('pages.datatable', $components);
@@ -148,7 +214,7 @@ class DashboardController extends Controller
         $date               = request()->get('date');
         $parameter_premises = request()->get('parameter_premises');
         $parameter_kondisi  = request()->get('parameter_kondisi');
-        $parameter_wilayah  = request()->get('parameter_wilayah');
+        $parameter_outlet   = request()->get('parameter_outlet');
 
 
         $data = DB::table('tb_checksheet')->select(array('img', 'kondisi_smw', 'catatan_smw', 'nama_smw', 'nama_pusat', 'catatan_pusat', 'tb_checksheet.id', 'wilayah', 'cabang', 'outlet', 'premises', 'kategori', 'kondisi', 'verifikasi', DB::raw('DATE(created_at) AS submitDate')))
@@ -158,7 +224,7 @@ class DashboardController extends Controller
             $data->where('created_at', '>=', $date);
         }
 
-        if ($parameter_premises || $parameter_kondisi || $parameter_wilayah) {
+        if ($parameter_premises && $parameter_kondisi && $parameter_outlet) {
             $startDate = date('Y-m-01');
             $endDate   = date('Y-m-31');
 
@@ -166,7 +232,7 @@ class DashboardController extends Controller
                 ->where('kondisi', '=', $parameter_kondisi)
                 ->where('created_at', '>=', $startDate)
                 ->where('created_at', '<=', $endDate)
-                ->where('wilayah', '=', $parameter_wilayah);
+                ->where('outlet', '=', $parameter_outlet);
         }
 
         return DataTables::of($data->get())
@@ -192,4 +258,6 @@ class DashboardController extends Controller
             ));
         }
     }
+
+    //--------------- END DATATABLE --------------//
 }

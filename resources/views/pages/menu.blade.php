@@ -308,7 +308,8 @@
 
                 series.columns.template.events.on("click", function(ev) {
                     var wilayah = ev.target.dataItem.dataContext.label;
-                    location.href = `/datatable/${premises}/${category}/${wilayah}`;
+                    location.href = `/cabang/${wilayah}/${category}/${premises}`;
+                    // location.href = `/datatable/${premises}/${category}/${wilayah}`;
                 });
 
                 series.columns.template.setAll({

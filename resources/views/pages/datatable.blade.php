@@ -12,8 +12,8 @@
                     value="{{ isset($premises) ? $premises : '' }}" readonly>
                 <input type="hidden" class="form-control" id="parameter_kondisi" value="{{ isset($kondisi) ? $kondisi : '' }}"
                     readonly>
-                <input type="hidden" class="form-control" id="parameter_wilayah"
-                    value="{{ isset($wilayah) ? $wilayah : '' }}" readonly>
+                <input type="hidden" class="form-control" id="parameter_outlet" value="{{ isset($outlet) ? $outlet : '' }}"
+                    readonly>
             </div>
             <div class="col-12">
                 <input type="date" class="form-control rounded border-0" id="date">
@@ -68,7 +68,7 @@
         <div class="modal-dialog modal-xl">
             <div class="modal-content">
                 <div class="modal-header border-0">
-                    <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                    <h5 class="modal-title" id="exampleModalLabel">Premises Detail</h5>
                     <button type="button" class="close" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
@@ -104,7 +104,7 @@
                         d.date = $('#date').val();
                         d.parameter_premises = $("#parameter_premises").val();
                         d.parameter_kondisi = $("#parameter_kondisi").val();
-                        d.parameter_wilayah = $("#parameter_wilayah").val();
+                        d.parameter_outlet = $("#parameter_outlet").val();
                     }
                 },
                 columns: [{
@@ -163,7 +163,7 @@
                 success: function(response) {
                     var data = response.data;
                     if (data) {
-                        if (data.img) {
+                        if (data.img != NULL) {
                             $('#evidence-review').attr('src',
                                 `https://elvis-premises.online/assets/evidence/${data.img}`);
                         }
