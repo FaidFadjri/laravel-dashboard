@@ -153,6 +153,16 @@
                 series.slices.template.events.on("click", function(ev) {
                     var category = ev.target.dataItem.dataContext.category;
                     var premises = $('#premises').val();
+
+                    var color = 0x00b503;
+                    if (category == 'Kurang Baik') {
+                        color = 0xdbd800;
+                    } else if (category == 'Perlu Perbaikan') {
+                        color = 0xfc0303;
+                    } else if (category == 'Not Available') {
+                        color = "#c4c4c4";
+                    }
+
                     if (chart) {
                         chart.dispose();
                     }
@@ -171,7 +181,7 @@
                         dataType: "json",
                         success: function(response) {
                             const data = response.data;
-                            showBar(premises, category, data);
+                            showBar(premises, category, data, color);
                         }
                     });
                 });
@@ -244,7 +254,7 @@
 
 
     <script>
-        function showBar(premises, category, array_result) {
+        function showBar(premises, category, array_result, color) {
             am5.ready(function() {
                 // Set themes
                 root2.setThemes([
@@ -324,6 +334,9 @@
                     return chart.get("colors").getIndex(series.columns.indexOf(target));
                 });
 
+                chart.get("colors").set("colors", [
+                    am5.color(color),
+                ]);
 
                 var arrayData = @json($data);
 
