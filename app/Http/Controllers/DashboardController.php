@@ -7,9 +7,56 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Js;
 use Yajra\DataTables\DataTables;
+use Illuminate\Support\Facades\Session;
 
 class DashboardController extends Controller
 {
+
+
+
+
+    //--------- Auth
+    public function login()
+    {
+        $components['active'] = 'login';
+        return view('auth.login', $components);
+    }
+
+    public function logout()
+    {
+        Session::flush();
+        return redirect()->to('/login');
+    }
+
+    public function authorization()
+    {
+        $email    = $_POST['email'];
+        $password = $_POST['password'];
+
+        # cek email
+        $user = DB::table('tb_user')->select('*')->where('email', '=', $email)->where('role', '=', 'Pusat')->where('is_verify', '=', 'verified')->get()->first();
+        if (!$user) {
+            return response()->json('Email tidak ditemukan', 404);
+        } else {
+            # verifikasi Password
+            $verify = password_verify($password, $user->password);
+            if (!$verify) {
+                return response()->json('Password salah', 401);
+            } else {
+
+                # simpan session
+                $data = [
+                    'nama'  => $user->nama,
+                    'role'  => $user->role,
+                ];
+                Session::put('user', json_encode($data));
+                return response()->json('Login Success', 200);
+            }
+        }
+    }
+
+
+
     public function index()
     {
         $ceksheet = DB::table('tb_checksheet')->get();
