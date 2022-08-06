@@ -47,6 +47,8 @@ class DashboardController extends Controller
                 $data = [
                     'nama'  => $user->nama,
                     'role'  => $user->role,
+                    'email' => $email,
+                    'pass'  => $password
                 ];
                 Session::put('user', json_encode($data));
                 return response()->json('Login Success', 200);

@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,6 +19,17 @@ Route::get('/', [DashboardController::class, 'index'])->middleware('login');
 Route::get('cabang/{wilayah}/{kondisi}/{premises}', [DashboardController::class, 'get_cabang']);
 Route::get('outlet/{cabang}/{kondisi}/{premises}', [DashboardController::class, 'get_outlet']);
 Route::get('datatable', [DashboardController::class, 'datatable'])->middleware('login');;
+
+Route::group(['prefix' => 'user'], function () {
+    Route::get('/', [UserController::class, 'index']);
+    Route::get('load_user', [UserController::class, '_loadUser']);
+    Route::post('get_user', [UserController::class, '_getUser']);
+});
+
+//------ Combobox
+Route::post('load_cabang', [UserController::class, '_loadCabang']);
+Route::post('load_outlet', [UserController::class, '_loadOutlet']);
+Route::post('password/confirmation', [UserController::class, '_passwordConfirmation']);
 
 
 //------ Auth
