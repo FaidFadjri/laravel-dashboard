@@ -15,33 +15,25 @@
                 <input type="hidden" class="form-control" id="parameter_outlet" value="{{ isset($outlet) ? $outlet : '' }}"
                     readonly>
             </div>
-            <div class="col-12">
-                <input type="date" class="form-control rounded border-0" id="date">
+            <div class="col-12 mb-2">
+                <input type="date" class="form-control rounded" id="date">
             </div>
-            {{-- <div class="col-3">
-                <select class="form-select border-0" aria-label="Default select example">
-                    <option selected>Semua Wilayah</option>
-                    <option value="1">One</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
-                </select>
-            </div> --}}
-            {{-- <div class="col-3">
-                <select class="form-select border-0" aria-label="Default select example">
-                    <option selected>Semua Cabang</option>
-                    <option value="1">One</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
+            <div class="col-sm-12 col-md-6 col-lg-6">
+                <select name="year" id="year" class="form-control rounded">
+                    <option value="">All Years</option>
+                    @foreach ($year as $row)
+                        <option value="{{ $row }}">{{ $row }}</option>
+                    @endforeach
                 </select>
             </div>
-            <div class="col-3">
-                <select class="form-select border-0" aria-label="Default select example">
-                    <option selected>Semua Outlet</option>
-                    <option value="1">One</option>
-                    <option value="2">Two</option>
-                    <option value="3">Three</option>
+            <div class="col-sm-12 col-md-6 col-lg-6">
+                <select name="month" id="month" class="form-control rounded">
+                    <option value="">All Months</option>
+                    @foreach ($month as $index => $row)
+                        <option value="{{ $numberOfMonth[$index] }}">{{ $row }}</option>
+                    @endforeach
                 </select>
-            </div> --}}
+            </div>
             <div class="col-12 mt-4">
                 <table class="table table-bordered nowrap" style="width:100%" id="checksheetTable">
                     <thead>
@@ -73,9 +65,69 @@
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
-                <div class="modal-body border-0 text-center">
-                    <img src="https://www.astralife.co.id/beta/wp-content/uploads/2019/11/default-img.png" class="img-fluid"
-                        alt="evidence" id="evidence-review" style="max-height: 60vh; object-fit: contain">
+                <div class="modal-body border-0">
+                    <div class="row">
+                        <div class="col-lg-4 col-sm-12 text-left">
+                            <div class="mb-3">
+                                <label for="wilayah" class="form-label">Wilayah</label>
+                                <input type="text" class="form-control" id="wilayah" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="cabang" class="form-label">Cabang</label>
+                                <input type="text" class="form-control" id="cabang" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="outlet" class="form-label">Outlet</label>
+                                <input type="text" class="form-control" id="outlet" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="kondisi" class="form-label">Penilaian Outlet</label>
+                                <input type="text" class="form-control" id="kondisi" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="created_at" class="form-label">Tanggal Outlet Input</label>
+                                <input type="text" class="form-control" id="created_at" readonly>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-sm-12 text-left">
+                            <div class="mb-3">
+                                <label for="nama_pusat" class="form-label">Nama SQ</label>
+                                <input type="text" class="form-control" id="nama_pusat" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="nama_smw" class="form-label">Nama SMW</label>
+                                <input type="text" class="form-control" id="nama_smw" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="kondisi_smw" class="form-label">Penilaian SMW</label>
+                                <input type="text" class="form-control" id="kondisi_smw" readonly>
+                            </div>
+                            <div class="mb-3">
+                                <label for="catatan" class="form-label">Catatan Outlet</label>
+                                <textarea name="catatan" id="catatan" class="form-control" readonly></textarea>
+                            </div>
+                        </div>
+                        <div class="col-lg-4 col-sm-12">
+                            <div class="mb-3">
+                                <label for="catatan_smw" class="form-label">Catatan SMW</label>
+                                <textarea name="catatan" id="catatan_smw" class="form-control" readonly></textarea>
+                            </div>
+                            <div class="mb-3">
+                                <label for="catatan_pusat" class="form-label">Catatan SQ</label>
+                                <textarea name="catatan" id="catatan_pusat" class="form-control" readonly></textarea>
+                            </div>
+                            <p>
+                                <button class="btn btn-primary" type="button" data-toggle="collapse"
+                                    data-target="#collapseExample" aria-expanded="false" aria-controls="collapseExample">
+                                    Download File Pendukung
+                                </button>
+                            </p>
+                            <div class="collapse border rounded" id="collapseExample">
+                                <div class="card card-body d-flex" id="download-list">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-primary" data-dismiss="modal">Sembunyikan</button>
@@ -102,9 +154,11 @@
                     url: '/load_datatable',
                     data: function(d) {
                         d.date = $('#date').val();
-                        d.parameter_premises = $("#parameter_premises").val();
-                        d.parameter_kondisi = $("#parameter_kondisi").val();
-                        d.parameter_outlet = $("#parameter_outlet").val();
+                        d.parameter_premises = $('#parameter_premises').val();
+                        d.parameter_kondisi = $('#parameter_kondisi').val();
+                        d.parameter_outlet = $('#parameter_outlet').val();
+                        d.year = $('#year').val();
+                        d.month = $('#month').val();
                     }
                 },
                 columns: [{
@@ -142,11 +196,15 @@
                 ],
             });
 
-            $('#date').change(function(e) {
+            $('#date, #year, #month').change(function(e) {
                 e.preventDefault();
                 table.draw();
             });
         });
+
+        const form = ['wilayah', 'cabang', 'outlet', 'catatan', 'kondisi', 'created_at', 'nama_pusat',
+            'nama_smw', 'kondisi_smw', 'catatan_outlet', 'catatan_smw', 'catatan_pusat'
+        ];
 
         $(document).on('click', '.btn-detail', function(param) {
             $('#evidenceModal').modal('show');
@@ -154,20 +212,39 @@
             var id = $(this).attr('data-id');
 
             $.ajax({
-                type: "get",
+                type: "POST",
                 url: "/get_detail",
                 data: {
                     id: id
                 },
                 dataType: "json",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
                 success: function(response) {
                     var data = response.data;
-                    if (data) {
-                        if (data.img != NULL) {
-                            $('#evidence-review').attr('src',
-                                `https://elvis-premises.online/assets/evidence/${data.img}`);
-                        }
+                    var evidence = response.evidence;
+                    console.log(data, evidence);
+
+                    form.forEach((element, index) => {
+                        $(`#${element}`).val(data[form[index]]);
+                    });
+
+                    //---- Set Download List
+                    let html = '';
+                    if (data['berita_acara']) {
+                        html +=
+                            `<a href="https://elvis-premises.online/assets/berita_acara/${data.berita_acara}" class="btn btn-outline-primary mb-2" download="${data.berita_acara}">Download Berita Acara</a>`;
                     }
+
+                    if (evidence.length > 0) {
+                        evidence.forEach((element, index) => {
+                            html +=
+                                `<a href="https://elvis-premises.online/assets/evidence/${element.file_name}" class="btn btn-outline-primary mb-2" download="${element.file_name}">Evidence #${index}</a>`;
+                        });
+                    }
+
+                    $("#download-list").html(html);
                 }
             });
         })

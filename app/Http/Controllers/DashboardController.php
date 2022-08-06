@@ -7,13 +7,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Redis;
 use Illuminate\Support\Js;
 use Yajra\DataTables\DataTables;
+
 use Illuminate\Support\Facades\Session;
+use DateTime;
 
 class DashboardController extends Controller
 {
-
-
-
 
     //--------- Auth
     public function login()
@@ -54,8 +53,6 @@ class DashboardController extends Controller
             }
         }
     }
-
-
 
     public function index()
     {
@@ -235,8 +232,23 @@ class DashboardController extends Controller
 
     public function datatable()
     {
+        $getYear       = DB::table('tb_checksheet')->select(DB::raw('YEAR(created_at) as year'))->distinct()->get();
+        $existingYear  = $getYear->pluck('year')->toArray();
+        $getMonth      = DB::table('tb_checksheet')->select(DB::raw('MONTH(created_at) as month'))->distinct()->get();
+        $numberOfMonth = $getMonth->pluck('month')->toArray();
+        $existingMonth = array();
+
+        foreach ($numberOfMonth as $key) {
+            $dateObj   = DateTime::createFromFormat('!m', $key);
+            $monthName = $dateObj->format('F');
+            array_push($existingMonth, $monthName);
+        }
+
         $components = [
-            'active' => 'datatable'
+            'active'        => 'datatable',
+            'year'          => $existingYear,
+            'month'         => $existingMonth,
+            'numberOfMonth' => $numberOfMonth
         ];
 
         return view('pages.datatable', $components);
@@ -244,11 +256,26 @@ class DashboardController extends Controller
 
     public function datatable_with_parameter($premises, $category, $outlet)
     {
+        $getYear       = DB::table('tb_checksheet')->select(DB::raw('YEAR(created_at) as year'))->distinct()->get();
+        $existingYear  = $getYear->pluck('year')->toArray();
+        $getMonth      = DB::table('tb_checksheet')->select(DB::raw('MONTH(created_at) as month'))->distinct()->get();
+        $numberOfMonth = $getMonth->pluck('month')->toArray();
+        $existingMonth = array();
+
+        foreach ($numberOfMonth as $key) {
+            $dateObj   = DateTime::createFromFormat('!m', $key);
+            $monthName = $dateObj->format('F');
+            array_push($existingMonth, $monthName);
+        }
+
         $components = [
             'active'    => 'datatable',
             'premises'  => $premises,
             'kondisi'   => $category,
-            'outlet'    => $outlet
+            'outlet'    => $outlet,
+            'year'          => $existingYear,
+            'month'         => $existingMonth,
+            'numberOfMonth' => $numberOfMonth
         ];
 
         return view('pages.datatable', $components);
@@ -271,6 +298,21 @@ class DashboardController extends Controller
             $data->where('created_at', '>=', $date);
         }
 
+        // Pengecekan parameter tahun dan bulan
+        if (request()->has('year')) {
+            $year = request()->get('year');
+            if ($year) {
+                $data->whereYear('created_at', '=', $year);
+            }
+        }
+
+        if (request()->has('month')) {
+            $month = request()->get('month');
+            if ($month) {
+                $data->whereMonth('created_at', '=', $month);
+            }
+        }
+
         if ($parameter_premises && $parameter_kondisi && $parameter_outlet) {
             $startDate = date('Y-m-01');
             $endDate   = date('Y-m-31');
@@ -285,8 +327,7 @@ class DashboardController extends Controller
         return DataTables::of($data->get())
             ->addIndexColumn()
             ->addColumn('action', function ($data) {
-                $html = '<button class="btn btn-danger" data-id="' . $data->id . '"><ion-icon name="trash"></ion-icon></button>';
-                $html .= '<button class="btn btn-primary btn-detail" style="margin-left:10px" data-id="' . $data->id . '"><ion-icon name="eye-outline"></ion-icon></button>';
+                $html = '<button class="btn btn-primary btn-detail" style="margin-left:10px" data-id="' . $data->id . '"><ion-icon name="eye-outline"></ion-icon></button>';
                 return $html;
             })->make(true);
     }
@@ -295,13 +336,20 @@ class DashboardController extends Controller
     {
         if (request()->ajax()) {
 
-            $checkId = request()->get('id');
-            $data    = DB::table('tb_checksheet')->select('*')->where('id', $checkId)->first();
+            $checkId     = $_POST['id'];
+            $data        = DB::table('tb_user')
+                ->join('tb_checksheet', 'tb_user.id', '=', 'tb_checksheet.id_user', 'inner')
+                ->select('*')
+                ->where('tb_checksheet.id', $checkId)
+                ->first();;
+            $evidence    = DB::table('tb_evidence')->select('*')->where('id_checksheet', $checkId)->get();
 
             return json_encode(array(
                 'code'      => 200,
                 'message'   => 'Berhasil Mendapatkan Data Detail',
-                'data'      => $data
+                'data'      => $data,
+                'id'        => $checkId,
+                'evidence'  => $evidence
             ));
         }
     }
