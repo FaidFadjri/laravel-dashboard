@@ -24,11 +24,13 @@ Route::group(['prefix' => 'user'], function () {
     Route::get('/', [UserController::class, 'index']);
     Route::get('load_user', [UserController::class, '_loadUser']);
     Route::post('get_user', [UserController::class, '_getUser']);
+    Route::post('save', [UserController::class, '_saveUser']);
 });
 
 //------ Combobox
 Route::post('load_cabang', [UserController::class, '_loadCabang']);
 Route::post('load_outlet', [UserController::class, '_loadOutlet']);
+Route::post('load_outlet2', [UserController::class, '_loadOutlet2']);
 Route::post('password/confirmation', [UserController::class, '_passwordConfirmation']);
 
 

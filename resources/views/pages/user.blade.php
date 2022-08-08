@@ -6,6 +6,14 @@
 
     <div class="container-fluid">
         <div class="row mt-3">
+            @if (Session::get('success'))
+                <div class="col-12 my-2">
+                    <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                        {{ Session::get('success') }}
+                        <button type="button" class="close" data-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                </div>
+            @endif
             <div class="col-3">
                 <select name="FilterRole" id="FilterRole" class="form-control" onchange="refreshTable()">
                     <option value="">Semua Role</option>
@@ -70,7 +78,8 @@
                     </button>
                 </div>
                 <div class="modal-body border-0">
-                    <form action="">
+                    <form action="/user/save" method="POST" id="editForm">
+                        @csrf
                         <div class="row">
                             <div class="col-lg-6 col-sm-12">
                                 <br>
@@ -83,17 +92,18 @@
                                     </div>
                                 </div>
                                 <br>
+                                <input type="hidden" name="id" id="id">
                                 <div class="form-group">
                                     <label for="nama">Nama</label>
-                                    <input type="text" class="form-control" id="nama" readonly>
+                                    <input type="text" class="form-control" id="nama" name="nama" readonly>
                                 </div>
                                 <div class="form-group">
                                     <label for="hp">Phone</label>
-                                    <input type="text" class="form-control" id="hp" readonly>
+                                    <input type="text" class="form-control" id="hp" name="hp" readonly>
                                 </div>
                                 <div class="form-group">
                                     <label for="email">Email</label>
-                                    <input type="text" class="form-control" id="email" readonly>
+                                    <input type="text" class="form-control" id="email" name="email" readonly>
                                 </div>
                             </div>
                             <div class="col-lg-6 col-sm-12">
@@ -107,18 +117,19 @@
                                 </div>
                                 <div class="form-group">
                                     <label for="detailWilayah">Wilayah</label>
-                                    <input type="text" id="detailWilayah" name="detailWilayah" class="form-control"
-                                        disabled>
+                                    <select name="detailWilayah" id="detailWilayah" class="form-control" disabled>
+                                        @foreach ($wilayah as $item)
+                                            <option value="{{ $item->wilayah }}"><?= $item->wilayah ?></option>
+                                        @endforeach
+                                    </select>
                                 </div>
                                 <div class="form-group">
                                     <label for="detailCabang">Cabang</label>
-                                    <input type="text" id="detailCabang" name="detailCabang" class="form-control"
-                                        disabled>
+                                    <select name="detailCabang" id="detailCabang" class="form-control" disabled></select>
                                 </div>
                                 <div class="form-group">
                                     <label for="detailOutlet">Outlet</label>
-                                    <input type="text" id="detailOutlet" name="detailOutlet" class="form-control"
-                                        disabled>
+                                    <select name="detailOutlet" id="detailOutlet" class="form-control" disabled></select>
                                 </div>
                             </div>
                         </div>
@@ -126,12 +137,15 @@
                 </div>
                 <div class="modal-footer border-0">
                     <button type="button" class="btn btn-primary" data-dismiss="modal">Sembunyikan</button>
-                    <button type="button" class="btn btn-danger d-none">Edit</button>
-                    <button type="button" class="btn btn-warning d-none">Simpan Perubahan</button>
+                    <button type="button" class="btn btn-danger btn-edit">Edit</button>
+                    <button type="button" class="btn btn-warning btn-save d-none">Simpan Perubahan</button>
                 </div>
             </div>
         </div>
     </div>
+
+
+
     <link rel="stylesheet" href="/assets/css/datatable.css">
 @endsection
 
@@ -190,16 +204,16 @@
             table.draw();
         }
 
-        $('#FilterWilayah, #addWilayah').change(function(e) {
+        $('#FilterWilayah').change(function(e) {
             e.preventDefault();
             var wilayah = $(this).val();
-            load_cabang(wilayah);
+            load_cabang(wilayah, "FilterCabang");
         });
 
-        $('#FilterCabang, #addCabang').change(function(e) {
+        $('#FilterCabang').change(function(e) {
             e.preventDefault();
             var cabang = $(this).val();
-            load_outlet(cabang);
+            load_outlet(cabang, "FilterOutlet");
         });
 
 
@@ -222,7 +236,7 @@
             }
         });
 
-        function load_cabang(wilayah) {
+        function load_cabang(wilayah, cabangComponents) {
             $.ajax({
                 type: "POST",
                 url: "{{ url('load_cabang') }}",
@@ -239,15 +253,14 @@
                         html += `<option value="${element['cabang']}"> ${element['outlet']} </option>`
                     });
 
-                    $("#FilterCabang").html(html);
-                    $("#addCabang").html(html);
+                    $(`#${cabangComponents}`).html(html);
 
                     refreshTable();
                 }
             });
         }
 
-        function load_outlet(cabang) {
+        function load_outlet(cabang, outletComponent) {
             $.ajax({
                 type: "POST",
                 url: "{{ url('load_outlet') }}",
@@ -265,14 +278,14 @@
                         html += `<option value="${element['outlet']}"> ${element['outlet']} </option>`
                     });
 
-                    $("#FilterOutlet").html(html);
-                    $("#addOutlet").html(html);
+                    $(`#${outletComponent}`).html(html);
                     refreshTable();
                 }
             });
         }
     </script>
 
+    {{-- Preview Image --}}
     <script>
         $('#addFoto').change(function() {
             const file = this.files[0];
@@ -347,13 +360,40 @@
             })
         })
 
-        const formField = ['nama', 'hp', 'email', 'detailRole', 'detailWilayah', 'detailCabang', 'detailOutlet'];
-        const detailField = ['nama', 'hp', 'email', 'role', 'wilayah', 'cabang', 'outlet'];
+        const formField = ['id', 'nama', 'hp', 'email', 'detailRole', 'detailWilayah'];
+        const detailField = ['id', 'nama', 'hp', 'email', 'role', 'wilayah'];
         var base_url = "https://elvis-premises.online/";
+
+
+        $("#detailWilayah").change(function(e) {
+            e.preventDefault();
+            var wilayah = $(this).val()
+            load_cabangEdit(wilayah, "detailCabang")
+        });
+
+        $("#detailCabang").change(function(e) {
+            e.preventDefault();
+            var cabang = $(this).val()
+            load_outletEdit(cabang, "detailOutlet")
+        });
+
+
 
         $(document).on('click', '.btn-detail', function() {
             $("#detailModal").modal('show');
             var id = $(this).attr('data-id');
+            $(".btn-save").addClass('d-none');
+
+            const newFormField = [
+                'nama', 'hp', 'email', 'detailRole',
+                'detailWilayah', 'detailCabang', 'detailOutlet'
+            ];
+
+            newFormField.forEach(element => {
+                $(`#${element}`).prop('disabled', true);
+            });
+
+
             $.ajax({
                 type: "POST",
                 url: "/user/get_user",
@@ -365,20 +405,95 @@
                     'X-CSRF-Token': '{{ csrf_token() }}',
                 },
                 success: function(response) {
+
+                    var user = response.user;
+                    var cabang = response.cabang.cabang;
+
+                    load_cabangEdit(user.wilayah, "detailCabang", user.cabang);
+                    load_outletEdit(user.cabang, "detailOutlet", user.outlet);
+
                     formField.forEach((element, index) => {
-                        if (response[detailField[index]]) {
+                        if (user[detailField[index]]) {
                             $(`#${element}`).parent().removeClass('d-none');
-                            $(`#${element}`).val(response[detailField[index]]);
+                            $(`#${element}`).val(user[detailField[index]]);
                         } else {
                             $(`#${element}`).parent().addClass('d-none');
                         }
                     });
 
-                    if (response.foto) {
-                        $("#img").attr("src", base_url + "img_profile/" + response.foto);
+                    if (user.foto) {
+                        $("#img").attr("src", base_url + "img_profile/" + user.foto);
                     }
                 }
             });
         })
+
+        $(document).on('click', '.btn-edit', function() {
+            const newFormField = [
+                'nama', 'hp', 'email', 'detailRole',
+                'detailWilayah', 'detailCabang', 'detailOutlet'
+            ];
+
+            newFormField.forEach(element => {
+                $(`#${element}`).prop('disabled', false);
+                $(`#${element}`).removeAttr('readonly');
+            });
+
+            $(".btn-save").removeClass('d-none');
+        })
+
+        $(document).on('click', '.btn-save', function() {
+            $("#editForm").submit();
+        })
+
+        function load_cabangEdit(wilayah, cabangComponents, cabang = null) {
+            $.ajax({
+                type: "POST",
+                url: "{{ url('load_cabang') }}",
+                data: {
+                    wilayah: wilayah
+                },
+                dataType: "json",
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+                success: function(response) {
+                    var html = '<option value="">Semua Cabang</option>';
+                    response.forEach(element => {
+                        html += `<option value="${element['outlet']}"> ${element['outlet']} </option>`
+                    });
+
+                    $(`#${cabangComponents}`).html(html);
+                    if (cabang) {
+                        $(`#${cabangComponents}`).val(cabang);
+                    }
+                }
+            });
+        }
+
+        function load_outletEdit(cabang, outletComponent, outlet = null) {
+            $.ajax({
+                type: "POST",
+                url: "{{ url('load_outlet2') }}",
+                data: {
+                    cabang: cabang
+                },
+                dataType: "json",
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+                success: function(response) {
+                    var html = '<option value="">Semua Outlet</option>';
+                    response.forEach(element => {
+                        html += `<option value="${element['outlet']}"> ${element['outlet']} </option>`
+                    });
+
+                    $(`#${outletComponent}`).html(html);
+                    if (outlet) {
+                        $(`#${outletComponent}`).val(outlet);
+                    }
+                }
+            });
+        }
     </script>
 @endsection

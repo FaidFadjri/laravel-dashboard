@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\User;
+use App\Models\UsersModel;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +15,7 @@ class UserController extends Controller
     public function index()
     {
         $wilayah   = DB::table('tb_outlet')->select(DB::raw("DISTINCT(wilayah)"))->get()->toArray();
+        // dd($realCabang     = DB::table('tb_outlet')->select('*')->where('outlet', "PEKALONGAN")->get()->first()->cabang);
         $component = [
             'active'  => 'user',
             'wilayah' => $wilayah
@@ -94,6 +97,21 @@ class UserController extends Controller
         }
     }
 
+    public function _loadOutlet2()
+    {
+        if (request()->ajax()) {
+            if (isset($_POST['cabang'])) {
+                $cabang         = $_POST['cabang'];
+                $realCabang     = DB::table('tb_outlet')->select('*')->where('outlet', $cabang)->get()->first()->cabang;
+
+                if ($cabang) {
+                    $outlet = DB::table('tb_outlet')->select('*')->where('cabang', $realCabang)->get()->toArray();
+                    return response()->json($outlet, 200);
+                }
+            }
+        }
+    }
+
     public function _passwordConfirmation()
     {
         if (request()->ajax()) {
@@ -124,11 +142,34 @@ class UserController extends Controller
         if (request()->ajax()) {
             if (isset($_POST['id'])) {
                 $id   = $_POST['id'];
-                $user = DB::table('tb_user')->select('*')->where('id', '=', $id)->get()->first();
+                $user   = DB::table('tb_user')->select('*')->where('id', '=', $id)->get()->first();
+                $cabang = DB::table('tb_outlet')->select('*')->where('outlet', $user->cabang)->get()->first();
+
                 if ($user) {
-                    return response()->json($user, 200);
+                    return response()->json(array(
+                        'user'   => $user,
+                        'cabang' => $cabang
+                    ), 200);
                 }
             }
         }
+    }
+
+    public function _saveUser()
+    {
+        $user = UsersModel::findOrFail($_POST['id']);
+
+        $user->update(
+            [
+                'email'     => $_POST['email'],
+                'nama'      => $_POST['nama'],
+                'hp'        => $_POST['hp'],
+                'wilayah'   => $_POST['detailWilayah'],
+                'cabang'    => $_POST['detailCabang'],
+                'outlet'    => $_POST['detailOutlet']
+            ]
+        );
+
+        return redirect()->to('/user')->with('success', 'Berhasil melakukan perubahan data');
     }
 }
