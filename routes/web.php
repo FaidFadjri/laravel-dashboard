@@ -18,7 +18,8 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [DashboardController::class, 'index'])->middleware('login');
 Route::get('cabang/{wilayah}/{kondisi}/{premises}', [DashboardController::class, 'get_cabang']);
 Route::get('outlet/{cabang}/{kondisi}/{premises}', [DashboardController::class, 'get_outlet']);
-Route::get('datatable', [DashboardController::class, 'datatable'])->middleware('login');;
+Route::get('datatable', [DashboardController::class, 'datatable'])->middleware('login');
+Route::get('report', [DashboardController::class, 'report'])->middleware('login');
 
 Route::group(['prefix' => 'user'], function () {
     Route::get('/', [UserController::class, 'index']);
@@ -45,6 +46,7 @@ Route::get('datatable/{premises}/{kondisi}/{outlet}', [DashboardController::clas
 
 //------ AJAX Routes
 Route::get('load_datatable', [DashboardController::class, 'load_datatable']);
+Route::get('load_report', [DashboardController::class, 'load_report']);
 Route::post('get_detail', [DashboardController::class, 'get_detail']);
 Route::post('load_barchart', [DashboardController::class, 'load_barchart']);
 Route::post('load_barchart', [DashboardController::class, 'load_barchart']);

@@ -100,6 +100,11 @@
                                             <span class="nk-menu-text">Datatable</span>
                                         </a>
                                     </li>
+                                    <li class="nk-menu-item {{ $active == 'report' ? 'active' : '' }}">
+                                        <a href="{{ url('report') }}" class="nk-menu-link">
+                                            <span class="nk-menu-text">Report</span>
+                                        </a>
+                                    </li>
                                     <li class="nk-menu-item {{ $active == 'user' ? 'active' : '' }}">
                                         <a href="{{ url('user') }}" class="nk-menu-link">
                                             <span class="nk-menu-text">User Management</span>

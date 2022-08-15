@@ -256,6 +256,30 @@ class DashboardController extends Controller
         return view('pages.datatable', $components);
     }
 
+    public function report()
+    {
+        $getYear       = DB::table('tb_checksheet')->select(DB::raw('YEAR(created_at) as year'))->distinct()->get();
+        $existingYear  = $getYear->pluck('year')->toArray();
+        $getMonth      = DB::table('tb_checksheet')->select(DB::raw('MONTH(created_at) as month'))->distinct()->get();
+        $numberOfMonth = $getMonth->pluck('month')->toArray();
+        $existingMonth = array();
+
+        foreach ($numberOfMonth as $key) {
+            $dateObj   = DateTime::createFromFormat('!m', $key);
+            $monthName = $dateObj->format('F');
+            array_push($existingMonth, $monthName);
+        }
+
+        $components = [
+            'active'        => 'report',
+            'year'          => $existingYear,
+            'month'         => $existingMonth,
+            'numberOfMonth' => $numberOfMonth
+        ];
+
+        return view('pages.report', $components);
+    }
+
     public function datatable_with_parameter($premises, $category, $outlet)
     {
         $getYear       = DB::table('tb_checksheet')->select(DB::raw('YEAR(created_at) as year'))->distinct()->get();
@@ -285,6 +309,56 @@ class DashboardController extends Controller
 
 
     public function load_datatable()
+    {
+
+        $date               = request()->get('date');
+        $parameter_premises = request()->get('parameter_premises');
+        $parameter_kondisi  = request()->get('parameter_kondisi');
+        $parameter_outlet   = request()->get('parameter_outlet');
+
+
+        $data = DB::table('tb_checksheet')->select(array('img', 'kondisi_smw', 'catatan_smw', 'nama_smw', 'nama_pusat', 'catatan_pusat', 'tb_checksheet.id', 'wilayah', 'cabang', 'outlet', 'premises', 'kategori', 'kondisi', 'verifikasi', DB::raw('DATE(created_at) AS submitDate')))
+            ->join('tb_user', 'tb_checksheet.id_user', '=', 'tb_user.id')->where('verifikasi', 'closing');
+
+        if ($date) {
+            $data->where('created_at', '>=', $date);
+        }
+
+        // Pengecekan parameter tahun dan bulan
+        if (request()->has('year')) {
+            $year = request()->get('year');
+            if ($year) {
+                $data->whereYear('created_at', '=', $year);
+            }
+        }
+
+        if (request()->has('month')) {
+            $month = request()->get('month');
+            if ($month) {
+                $data->whereMonth('created_at', '=', $month);
+            }
+        }
+
+        if ($parameter_premises && $parameter_kondisi && $parameter_outlet) {
+            $startDate = date('Y-m-01');
+            $endDate   = date('Y-m-31');
+
+            $data->where('premises', '=', $parameter_premises)
+                ->where('kondisi', '=', $parameter_kondisi)
+                ->where('created_at', '>=', $startDate)
+                ->where('created_at', '<=', $endDate)
+                ->where('outlet', '=', $parameter_outlet);
+        }
+
+        return DataTables::of($data->get())
+            ->addIndexColumn()
+            ->addColumn('action', function ($data) {
+                $html = '<button class="btn btn-primary btn-detail" style="margin-left:10px" data-id="' . $data->id . '"><ion-icon name="eye-outline"></ion-icon></button>';
+                return $html;
+            })->make(true);
+    }
+
+    public function load_report()
     {
 
         $date               = request()->get('date');
