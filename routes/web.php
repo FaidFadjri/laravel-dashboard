@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\DashboardController;
+use App\Http\Controllers\Export;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -21,6 +22,8 @@ Route::get('outlet/{cabang}/{kondisi}/{premises}', [DashboardController::class, 
 Route::get('datatable', [DashboardController::class, 'datatable'])->middleware('login');
 Route::get('report', [DashboardController::class, 'report'])->middleware('login');
 
+Route::post('load_premisesdata', [DashboardController::class, '_getPremisesData']);
+
 Route::group(['prefix' => 'user'], function () {
     Route::get('/', [UserController::class, 'index']);
     Route::get('load_user', [UserController::class, '_loadUser']);
@@ -34,6 +37,9 @@ Route::post('load_outlet', [UserController::class, '_loadOutlet']);
 Route::post('load_outlet2', [UserController::class, '_loadOutlet2']);
 Route::post('password/confirmation', [UserController::class, '_passwordConfirmation']);
 
+//---- Export
+Route::post('export', [Export::class, 'index']);
+Route::get('export/test', [Export::class, 'createExcel']);
 
 //------ Auth
 Route::get('login', [DashboardController::class, 'login']);

@@ -7,6 +7,8 @@ use App\Models\UsersModel;
 use Illuminate\Contracts\Session\Session;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use PDO;
 use Yajra\DataTables\Facades\DataTables;
 
@@ -15,7 +17,6 @@ class UserController extends Controller
     public function index()
     {
         $wilayah   = DB::table('tb_outlet')->select(DB::raw("DISTINCT(wilayah)"))->get()->toArray();
-        // dd($realCabang     = DB::table('tb_outlet')->select('*')->where('outlet', "PEKALONGAN")->get()->first()->cabang);
         $component = [
             'active'  => 'user',
             'wilayah' => $wilayah
@@ -157,19 +158,57 @@ class UserController extends Controller
 
     public function _saveUser()
     {
-        $user = UsersModel::findOrFail($_POST['id']);
 
-        $user->update(
-            [
-                'email'     => $_POST['email'],
-                'nama'      => $_POST['nama'],
-                'hp'        => $_POST['hp'],
-                'wilayah'   => $_POST['detailWilayah'],
-                'cabang'    => $_POST['detailCabang'],
-                'outlet'    => $_POST['detailOutlet']
-            ]
-        );
+        $POST_URL   = "http://localhost:8080/api/upload/image/asdasodihaosdihaiosdhoasdhohdiohaosdhoashdoasdhsad";
+        $user     = UsersModel::findOrFail($_POST['id']);
 
+        $data = [
+            'email'     => $_POST['email'],
+            'nama'      => $_POST['nama'],
+            'hp'        => $_POST['hp'],
+            'wilayah'   => $_POST['detailWilayah']
+        ];
+
+
+        if (request()->file('image')) {
+            $oldImage = UsersModel::select('foto')->where('id', '=', $_POST['id'])->get()->first()['foto'];
+            $file =  request()->file('image');
+            $newName = $file->getFilename();
+            $data['foto'] = $newName;
+
+            if ($oldImage) {
+                //------ Hapus atau unlink image
+                Http::get('http://localhost:8080/api/unlink/image/' . $oldImage . '/asdasodihaosdihaiosdhoasdhohdiohaosdhoashdoasdhsad');
+            }
+
+            $response = Http::post($POST_URL, [
+                'userId' => $_POST['id'],
+                'image' => Storage::get('assets/people.JPG'),
+            ]);
+
+            dd($response);
+        }
+
+
+        if (isset($_POST['detailCabang'])) {
+            if ($_POST['detailCabang']) {
+                $data['cabang'] = $_POST['detailCabang'];
+            }
+        };
+
+        if (isset($_POST['detailOutlet'])) {
+            if ($_POST['detailOutlet']) {
+                $data['outlet'] = $_POST['detailOutlet'];
+            }
+        };
+
+        if (isset($_POST['password'])) {
+            if ($_POST['password']) {
+                $data['password'] = password_hash($_POST['password'], PASSWORD_BCRYPT);
+            }
+        };
+
+        $user->update($data);
         return redirect()->to('/user')->with('success', 'Berhasil melakukan perubahan data');
     }
 }

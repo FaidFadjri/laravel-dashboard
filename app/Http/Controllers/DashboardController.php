@@ -58,70 +58,78 @@ class DashboardController extends Controller
 
     public function index()
     {
-        $ceksheet = DB::table('tb_checksheet')->get();
-        $startDate = date('Y-m-01');
-        $endDate   = date('Y-m-31');
-
-        $currentMonthData = DB::table('tb_checksheet')->select('*')
-            ->where('created_at', '>=', $startDate)
-            ->where('created_at', '<=', $endDate)
-            ->orderBy('created_at')
-            ->get()->toArray();
-
-        //--- Ambil semua data yang
-        $bahanWilayah = DB::table('tb_user')
-            ->join('tb_checksheet', 'tb_user.id', '=', 'tb_checksheet.id_user', 'inner')
-            ->select('*')
-            ->orderBy('created_at')
-            ->get()->toArray();
-
-        $distinctWilayah = DB::table('tb_outlet')
-            ->distinct('wilayah')
-            ->groupBy('wilayah')
-            ->get()->toArray();
-
-        $shetnama   = array();
-        $baik       = array();
-        $kurang     = array();
-        $perlu      = array();
-        $na         = array();
-        $data       = array();
-        $wilayah    = array();
-
-        foreach ($ceksheet as $item) {
-            array_push($shetnama, $item->premises);
-        }
-
-        foreach ($currentMonthData as $item) {
-            if ($item->kondisi == 'baik') {
-                array_push($baik, $item);
-            } else if ($item->kondisi == 'kurang baik') {
-                array_push($kurang, $item);
-            } else if ($item->kondisi == 'perlu perbaikan' || $item->kondisi == 'perlu penggantian') {
-                array_push($perlu, $item);
-            } else if ($item->kondisi == 'not available') {
-                array_push($na, $item);
-            }
-
-            array_push($data, $item);
-        }
-
-
-        for ($i = 0; $i < sizeof($distinctWilayah); $i++) {
-            $resultGroupBy = array_keys(array_keys(array_combine(array_keys($bahanWilayah), array_column($bahanWilayah, 'wilayah')), $distinctWilayah[$i]->wilayah));
-            $wilayah[$distinctWilayah[$i]->wilayah] = sizeof($resultGroupBy);
-        }
-
-        $components['js_premises']  = $shetnama;
-        $components['js_baik']      = $baik;
-        $components['js_kurang']    = $kurang;
-        $components['js_perlu']     = $perlu;
-        $components['js_na']        = $na;
-        $components['data']         = $data;
-        $components['ceksheet']     = $ceksheet;
-        $components['wilayah']      = $wilayah;
+        $checklist = DB::table('tb_checklist')->select('*')->get()->toArray();
+        $components['checklist']    = $checklist;
         $components['active']       = 'dashboard';
         return view('pages/menu', $components);
+    }
+
+    public function _getPremisesData()
+    {
+        if (request()->has('premises')) {
+
+            $startDate = date('Y-m-01');
+            $endDate   = date('Y-m-31');
+
+            $premises = request()->get('premises');
+
+            $currentMonthData = DB::table('tb_checksheet')->select('*')
+                ->where('created_at', '>=', $startDate)
+                ->where('created_at', '<=', $endDate)
+                ->where('premises', $premises)
+                ->orderBy('created_at')
+                ->where('verifikasi', 'closing')
+                ->get()->toArray();
+
+            $baik       = array();
+            $kurang     = array();
+            $perlu      = array();
+            $na         = array();
+            $data       = array();
+
+            foreach ($currentMonthData as $item) {
+                if ($item->kondisi == 'baik') {
+                    array_push($baik, $item);
+                } else if ($item->kondisi == 'kurang baik') {
+                    array_push($kurang, $item);
+                } else if ($item->kondisi == 'perlu perbaikan' || $item->kondisi == 'perlu penggantian') {
+                    array_push($perlu, $item);
+                } else if ($item->kondisi == 'not available') {
+                    array_push($na, $item);
+                }
+
+                array_push($data, $item);
+            }
+
+            $pieData = [
+                [
+                    'category' => "baik",
+                    'sector'   => "Baik",
+                    'size'     => sizeOf($baik)
+                ],
+                [
+                    'category' => "kurang baik",
+                    'sector'   => "kurang baik",
+                    'size'     => sizeOf($kurang)
+                ],
+                [
+                    'category' => "Perlu Perbaikan",
+                    'sector'   => "Perlu Perbaikan",
+                    'size'     => sizeOf($perlu)
+                ],
+                [
+                    'category' => "Not Available",
+                    'sector'   => "Not Available",
+                    'size'     => sizeOf($na)
+                ]
+            ];
+
+            $result = [
+                'pieData' => $pieData,
+                'data'    => $data
+            ];
+            return response()->json($result, 200);
+        }
     }
 
     public function load_barchart()
@@ -142,6 +150,7 @@ class DashboardController extends Controller
                 ->where('premises', '=', $premises)
                 ->where('created_at', '>=', $startDate)
                 ->where('created_at', '<=', $endDate)
+                ->where('verifikasi', 'closing')
                 ->get()->toArray();
 
             $semuaWilayah = DB::table('tb_outlet')
@@ -151,7 +160,6 @@ class DashboardController extends Controller
 
             for ($i = 0; $i < sizeof($semuaWilayah); $i++) {
                 $resultGroupBy = array_keys(array_keys(array_combine(array_keys($data), array_column($data, 'wilayah')), $semuaWilayah[$i]->wilayah));
-                // $result[$semuaWilayah[$i]->wilayah] = sizeof($resultGroupBy);
                 $result[$i] = [
                     'label' => $semuaWilayah[$i]->wilayah,
                     'value' => sizeof($resultGroupBy)
@@ -209,6 +217,7 @@ class DashboardController extends Controller
             ->where('premises', '=', $premises)
             ->where('created_at', '>=', $startDate)
             ->where('created_at', '<=', $endDate)
+            ->where('verifikasi', 'closing')
             ->get()->toArray();
 
         $getOutlet   = DB::table('tb_outlet')->select('*')->where('cabang', '=', $cabang)->groupBy('outlet')->get()->toArray();
@@ -264,6 +273,8 @@ class DashboardController extends Controller
         $numberOfMonth = $getMonth->pluck('month')->toArray();
         $existingMonth = array();
 
+        $wilayah       = DB::table('tb_outlet')->select('wilayah')->where('wilayah', '!=', 'wilayah')->orderBy('wilayah', 'ASC')->distinct()->get()->toArray();
+
         foreach ($numberOfMonth as $key) {
             $dateObj   = DateTime::createFromFormat('!m', $key);
             $monthName = $dateObj->format('F');
@@ -274,7 +285,8 @@ class DashboardController extends Controller
             'active'        => 'report',
             'year'          => $existingYear,
             'month'         => $existingMonth,
-            'numberOfMonth' => $numberOfMonth
+            'numberOfMonth' => $numberOfMonth,
+            'wilayah'       => $wilayah
         ];
 
         return view('pages.report', $components);
@@ -295,10 +307,10 @@ class DashboardController extends Controller
         }
 
         $components = [
-            'active'    => 'datatable',
-            'premises'  => $premises,
-            'kondisi'   => $category,
-            'outlet'    => $outlet,
+            'active'        => 'datatable',
+            'premises'      => $premises,
+            'kondisi'       => $category,
+            'outlet'        => $outlet,
             'year'          => $existingYear,
             'month'         => $existingMonth,
             'numberOfMonth' => $numberOfMonth
@@ -399,6 +411,8 @@ class DashboardController extends Controller
                 ->where('created_at', '<=', $endDate)
                 ->where('outlet', '=', $parameter_outlet);
         }
+
+        $data->orderBy('tb_user.outlet', 'ASC');
 
         return DataTables::of($data->get())
             ->addIndexColumn()

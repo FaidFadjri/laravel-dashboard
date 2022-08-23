@@ -78,17 +78,18 @@
                     </button>
                 </div>
                 <div class="modal-body border-0">
-                    <form action="/user/save" method="POST" id="editForm">
+                    <form action="/user/save" method="POST" id="editForm" enctype="multipart/form-data">
                         @csrf
                         <div class="row">
                             <div class="col-lg-6 col-sm-12">
                                 <br>
-                                <div class="form-group mb-5 d-flex align-items-center justify-content-center gap-3">
+                                <div
+                                    class="form-group mb-5 d-flex flex-column align-items-center justify-content-center gap-3">
                                     <img src="https://www.imgacademy.com/themes/custom/imgacademy/images/helpbox-contact.jpg"
                                         alt="thumbnail" class="rounded-circle"
                                         style="width: 100px;height: 100px; object-fit: cover;" id="img">
-                                    <div class="form-group d-none">
-                                        <input type="file" class="form-control">
+                                    <div class="form-group d-none" id="inputImgWrap">
+                                        <input type="file" class="form-control" id="inputImg" name="image">
                                     </div>
                                 </div>
                                 <br>
@@ -130,6 +131,10 @@
                                 <div class="form-group">
                                     <label for="detailOutlet">Outlet</label>
                                     <select name="detailOutlet" id="detailOutlet" class="form-control" disabled></select>
+                                </div>
+                                <div class="form-group">
+                                    <label for="password">Password</label>
+                                    <input name="password" id="password" class="form-control" readonly>
                                 </div>
                             </div>
                         </div>
@@ -287,13 +292,13 @@
 
     {{-- Preview Image --}}
     <script>
-        $('#addFoto').change(function() {
+        $('#inputImg').change(function() {
             const file = this.files[0];
             if (file) {
                 let reader = new FileReader();
                 reader.onload = function(event) {
                     console.log(event.target.result);
-                    $('#preview-add').attr('src', event.target.result);
+                    $('#img').attr('src', event.target.result);
                 }
                 reader.readAsDataURL(file);
             }
@@ -362,7 +367,8 @@
 
         const formField = ['id', 'nama', 'hp', 'email', 'detailRole', 'detailWilayah'];
         const detailField = ['id', 'nama', 'hp', 'email', 'role', 'wilayah'];
-        var base_url = "https://elvis-premises.online/";
+        // var base_url = "https://elvis-premises.online/";
+        var base_url = "http://localhost:8080";
 
 
         $("#detailWilayah").change(function(e) {
@@ -386,7 +392,7 @@
 
             const newFormField = [
                 'nama', 'hp', 'email', 'detailRole',
-                'detailWilayah', 'detailCabang', 'detailOutlet'
+                'detailWilayah', 'detailCabang', 'detailOutlet', 'password'
             ];
 
             newFormField.forEach(element => {
@@ -431,12 +437,13 @@
         $(document).on('click', '.btn-edit', function() {
             const newFormField = [
                 'nama', 'hp', 'email', 'detailRole',
-                'detailWilayah', 'detailCabang', 'detailOutlet'
+                'detailWilayah', 'detailCabang', 'detailOutlet', 'password', 'inputImgWrap'
             ];
 
             newFormField.forEach(element => {
                 $(`#${element}`).prop('disabled', false);
                 $(`#${element}`).removeAttr('readonly');
+                $(`#${element}`).removeClass('d-none');
             });
 
             $(".btn-save").removeClass('d-none');

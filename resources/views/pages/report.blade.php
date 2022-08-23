@@ -5,35 +5,54 @@
     <script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
 
     <div class="container-fluid">
-        <div class="row mt-3">
-            <div class="col-12">
-                {{-- Input Hidden for custom parameter --}}
-                <input type="hidden" class="form-control" id="parameter_premises"
-                    value="{{ isset($premises) ? $premises : '' }}" readonly>
-                <input type="hidden" class="form-control" id="parameter_kondisi" value="{{ isset($kondisi) ? $kondisi : '' }}"
-                    readonly>
-                <input type="hidden" class="form-control" id="parameter_outlet" value="{{ isset($outlet) ? $outlet : '' }}"
-                    readonly>
+
+        <form action="/export" method="POST">
+            @csrf
+            <div class="row mt-4">
+                <div class="col-12 text-end">
+                    <button class="btn btn-primary" type="submit">Export Excel</button>
+                </div>
             </div>
-            <div class="col-12 mb-2">
-                <input type="date" class="form-control rounded" id="date">
+            <div class="row mt-3">
+                <div class="col-12">
+                    {{-- Input Hidden for custom parameter --}}
+                    <input type="hidden" class="form-control" id="parameter_premises"
+                        value="{{ isset($premises) ? $premises : '' }}" readonly>
+                    <input type="hidden" class="form-control" id="parameter_kondisi"
+                        value="{{ isset($kondisi) ? $kondisi : '' }}" readonly>
+                    <input type="hidden" class="form-control" id="parameter_outlet"
+                        value="{{ isset($outlet) ? $outlet : '' }}" readonly>
+                </div>
+                <div class="col-sm-12 col-md-6 mb-2">
+                    <input type="date" class="form-control rounded" id="date">
+                </div>
+                <div class="col-sm-12 col-md-6">
+                    <select name="wilayah" class="form-control" required>
+                        <option value="">Export Wilayah</option>
+                        @foreach ($wilayah as $item)
+                            <option value="{{ $item->wilayah }}">{{ $item->wilayah }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-sm-12 col-md-6 col-lg-6">
+                    <select name="year" id="year" class="form-control rounded" required>
+                        <option value="">All Years</option>
+                        @foreach ($year as $row)
+                            <option value="{{ $row }}">{{ $row }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div class="col-sm-12 col-md-6 col-lg-6">
+                    <select name="month" id="month" class="form-control rounded" required>
+                        <option value="">All Months</option>
+                        @foreach ($month as $index => $row)
+                            <option value="{{ $numberOfMonth[$index] }}">{{ $row }}</option>
+                        @endforeach
+                    </select>
+                </div>
             </div>
-            <div class="col-sm-12 col-md-6 col-lg-6">
-                <select name="year" id="year" class="form-control rounded">
-                    <option value="">All Years</option>
-                    @foreach ($year as $row)
-                        <option value="{{ $row }}">{{ $row }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div class="col-sm-12 col-md-6 col-lg-6">
-                <select name="month" id="month" class="form-control rounded">
-                    <option value="">All Months</option>
-                    @foreach ($month as $index => $row)
-                        <option value="{{ $numberOfMonth[$index] }}">{{ $row }}</option>
-                    @endforeach
-                </select>
-            </div>
+        </form>
+        <div class="row">
             <div class="col-12 mt-4">
                 <table class="table table-bordered nowrap" style="width:100%" id="checksheetTable">
                     <thead>
@@ -42,8 +61,8 @@
                             <th>Wilayah</th>
                             <th>Cabang</th>
                             <th>Outlet</th>
-                            <th>Premises</th>
                             <th>Kategori</th>
+                            <th>Premises</th>
                             <th>Penilaian</th>
                             <th>Status</th>
                             <th>Outlet Submit Date</th>
@@ -174,10 +193,10 @@
                         data: 'outlet'
                     },
                     {
-                        data: 'premises'
+                        data: 'kategori'
                     },
                     {
-                        data: 'kategori'
+                        data: 'premises'
                     },
                     {
                         data: 'kondisi'

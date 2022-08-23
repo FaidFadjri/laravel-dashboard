@@ -1,5 +1,11 @@
 @extends('app')
 @section('content')
+    {{-- Hidden Input --}}
+    <input type="hidden" class="form-control" id="js_baik" readonly>
+    <input type="hidden" class="form-control" id="js_kurang" readonly>
+    <input type="hidden" class="form-control" id="js_perlu" readonly>
+    <input type="hidden" class="form-control" id="js_na" readonly>
+
     <div class="nk-block-head nk-block-head-sm">
         <div class="nk-block-between">
             <div class="nk-block-head-content">
@@ -13,43 +19,13 @@
     <div class="nk-block">
 
         {{-- Hidden Input --}}
-        <input type="hidden" class="form-control" id="js_baik"
-            value="{{ sizeOf(array_keys(array_keys(array_combine(array_keys($js_baik), array_column($js_baik, 'premises')), $ceksheet[0]->premises))) }}"
-            readonly>
-        <input type="hidden" class="form-control" id="js_kurang"
-            value="{{ sizeOf(array_keys(array_keys(array_combine(array_keys($js_kurang), array_column($js_kurang, 'premises')), $ceksheet[0]->premises))) }}"
-            readonly>
-        <input type="hidden" class="form-control" id="js_perlu"
-            value="{{ sizeOf(array_keys(array_keys(array_combine(array_keys($js_perlu), array_column($js_perlu, 'premises')), $ceksheet[0]->premises))) }}"
-            readonly>
-        <input type="hidden" class="form-control" id="js_na"
-            value="{{ sizeOf(array_keys(array_keys(array_combine(array_keys($js_na), array_column($js_na, 'premises')), $ceksheet[0]->premises))) }}"
-            readonly>
-        <input type="hidden" class="form-control" id="premises" value="{{ $ceksheet[0]->premises }}" readonly>
-
         <div class="card card-bordered card-preview">
             <div class="card-inner">
-                <ul class="nav nav-tabs mt-n3 scrl scrollbar--seafoam">
-                    @php  $i=0;  @endphp
-                    @foreach ($ceksheet as $item)
-                        @if ($i == 0)
-                            @php  $aktiva = 'active';  @endphp
-                        @else
-                            @php $aktiva = '';  @endphp
-                        @endif
-                        <li class="nav-item">
-                            <a style="cursor: pointer" class="nav-link tabku {{ $aktiva }}"
-                                id="mtab{{ $i }}" data-tabid="{{ $item->id }}"
-                                data-baik="{{ sizeOf(array_keys(array_keys(array_combine(array_keys($js_baik), array_column($js_baik, 'premises')), $item->premises))) }}"
-                                data-not-available="{{ sizeOf(array_keys(array_keys(array_combine(array_keys($js_na), array_column($js_na, 'premises')), $item->premises))) }}"
-                                data-kurang="{{ sizeOf(array_keys(array_keys(array_combine(array_keys($js_kurang), array_column($js_kurang, 'premises')), $item->premises))) }}"
-                                data-perlu-perbaikan="{{ sizeOf(array_keys(array_keys(array_combine(array_keys($js_perlu), array_column($js_perlu, 'premises')), $item->premises))) }}"
-                                data-bs-toggle="tab" data-premises="{{ $item->premises }}"
-                                data-kategori="{{ $item->kategori }}">{{ $item->premises }}</a>
-                        </li>
-                        @php $i++; @endphp
+                <select class="form-select" aria-label="Default select example" id="premises">
+                    @foreach ($checklist as $item)
+                        <option value="{{ $item->premises }}"><?= $item->premises ?></option>
                     @endforeach
-                </ul>
+                </select>
 
                 <div class="tab-content">
                     <div class="row">
@@ -96,7 +72,8 @@
         var chart;
 
         $(document).ready(function() {
-            showPie(); //--- Default Pie with first index data
+            // getData();
+            // showPie(); //--- Default Pie with first index data
             //---- Handle click event for each nav items
             $('.tabku').on('click', function() {
 
@@ -129,31 +106,23 @@
             // showBar();
         });
 
-        function showPie() {
+        function showPie(data = null) {
             am5.ready(function() {
-                // Ambil data dari hidden input
-                var baik = $('#js_baik').val();
-                var kurang = $('#js_kurang').val();
-                var perlu = $('#js_perlu').val();
-                var na = $('#js_na').val();
 
                 // Create series
                 var series = chartpie.series.push(am5percent.PieSeries.new(root, {
                     valueField: "size",
                     categoryField: "sector"
                 }));
-
                 var sliceTemplate = series.slices.template;
                 sliceTemplate.setAll({
                     draggable: false,
                     templateField: "settings",
                     cornerRadius: 8
                 });
-
                 series.slices.template.events.on("click", function(ev) {
                     var category = ev.target.dataItem.dataContext.category;
                     var premises = $('#premises').val();
-
                     var color = 0x00b503;
                     if (category == 'Kurang Baik') {
                         color = 0xdbd800;
@@ -162,11 +131,9 @@
                     } else if (category == 'Not Available') {
                         color = "#c4c4c4";
                     }
-
                     if (chart) {
                         chart.dispose();
                     }
-
                     //---- Panggil AJAX JQUERY
                     $.ajax({
                         headers: {
@@ -185,51 +152,45 @@
                         }
                     });
                 });
-
                 series.get("colors").set("colors", [
                     am5.color(0x00b503),
                     am5.color(0xdbd800),
                     am5.color(0xfc0303),
                     am5.color("#c4c4c4"),
                 ]);
-
-
                 // Set data
                 // https://www.amcharts.com/docs/v5/charts/percent-charts/pie-chart/#Setting_data
+                // series.data.setAll([data]);
                 series.data.setAll([{
                         category: "baik",
                         sector: "Baik",
-                        size: baik
+                        size: data[0]['size']
                     },
                     {
                         category: "kurang baik",
                         sector: "Kurang Baik",
-                        size: kurang
+                        size: data[1]['size']
                     },
                     {
                         category: "perlu perbaikan",
                         sector: "Perlu Perbaikan",
-                        size: perlu
+                        size: data[2]['size']
                     },
                     {
                         category: "not available",
                         sector: "Not Available",
-                        size: na
+                        size: data[3]['size']
                     }
                 ]);
-
                 var sliceTemplate = series.slices.template;
                 sliceTemplate.setAll({
                     draggable: false,
                     templateField: "settings",
                     cornerRadius: 4
                 });
-
                 // Play initial series animation
                 // https://www.amcharts.com/docs/v5/concepts/animations/#Animation_of_series
                 series.appear(1000, 100);
-
-
                 // Add label
                 var label = root.tooltipContainer.children.push(am5.Label.new(root, {
                     x: am5.p50,
@@ -239,7 +200,6 @@
                     fill: am5.color(0x000000),
                     fontSize: 50
                 }));
-
                 //----
                 legend = chartpie.children.push(am5.Legend.new(root, {
                     centerX: am5.percent(50),
@@ -252,7 +212,6 @@
         }
     </script>
 
-
     <script>
         function showBar(premises, category, array_result, color) {
             am5.ready(function() {
@@ -260,7 +219,6 @@
                 root2.setThemes([
                     am5themes_Animated.new(root2)
                 ]);
-
                 // Create chart
                 // https://www.amcharts.com/docs/v5/charts/xy-chart/
                 chart = root2.container.children.push(am5xy.XYChart.new(root2, {
@@ -270,13 +228,10 @@
                     wheelY: "zoomX",
                     pinchZoomX: true
                 }));
-
                 // Add cursor
                 // https://www.amcharts.com/docs/v5/charts/xy-chart/cursor/
                 var cursor = chart.set("cursor", am5xy.XYCursor.new(root2, {}));
                 cursor.lineY.set("visible", false);
-
-
                 // Create axes
                 // https://www.amcharts.com/docs/v5/charts/xy-chart/axes/
                 var xRenderer = am5xy.AxisRendererX.new(root2, {
@@ -288,20 +243,16 @@
                     centerX: am5.p100,
                     paddingRight: 15
                 });
-
                 var xAxis = chart.xAxes.push(am5xy.CategoryAxis.new(root2, {
                     maxDeviation: 0.3,
                     categoryField: "label",
                     renderer: xRenderer,
                     tooltip: am5.Tooltip.new(root2, {})
                 }));
-
                 var yAxis = chart.yAxes.push(am5xy.ValueAxis.new(root2, {
                     maxDeviation: 0.3,
                     renderer: am5xy.AxisRendererY.new(root2, {})
                 }));
-
-
                 // Create series
                 // https://www.amcharts.com/docs/v5/charts/xy-chart/series/
                 var series = chart.series.push(am5xy.ColumnSeries.new(root2, {
@@ -315,13 +266,11 @@
                         labelText: "{valueY}"
                     })
                 }));
-
                 series.columns.template.events.on("click", function(ev) {
                     var wilayah = ev.target.dataItem.dataContext.label;
                     location.href = `/cabang/${wilayah}/${category}/${premises}`;
                     // location.href = `/datatable/${premises}/${category}/${wilayah}`;
                 });
-
                 series.columns.template.setAll({
                     cornerRadiusTL: 5,
                     cornerRadiusTR: 5
@@ -329,27 +278,53 @@
                 series.columns.template.adapters.add("fill", function(fill, target) {
                     return chart.get("colors").getIndex(series.columns.indexOf(target));
                 });
-
                 series.columns.template.adapters.add("stroke", function(stroke, target) {
                     return chart.get("colors").getIndex(series.columns.indexOf(target));
                 });
-
                 chart.get("colors").set("colors", [
                     am5.color(color),
                 ]);
 
-                var arrayData = @json($data);
-
-
-                // Set data
                 var data = array_result;
-
                 xAxis.data.setAll(data);
                 series.data.setAll(data);
                 series.appear(1000);
                 chart.appear(1000, 100);
-
             }); // end am5.ready()
+        }
+    </script>
+
+    <script>
+        getData()
+
+        $('#premises').change(function(e) {
+            e.preventDefault();
+            //--- dispose chart
+            chartpie.series.removeIndex(0).dispose();
+            legend.dispose();
+            if (chart) {
+                chart.dispose();
+            }
+            getData();
+        });
+
+        function getData() {
+            var premises = $("#premises").val()
+
+            $.ajax({
+                type: "POST",
+                url: "/load_premisesdata",
+                data: {
+                    premises: premises
+                },
+                dataType: "json",
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    showPie(response.pieData);
+                }
+            });
         }
     </script>
 @endsection
