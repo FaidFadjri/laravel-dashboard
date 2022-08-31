@@ -16,6 +16,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
+Route::get('test', [DashboardController::class, 'test']);
 Route::get('/', [DashboardController::class, 'index'])->middleware('login');
 Route::get('cabang/{wilayah}/{kondisi}/{premises}', [DashboardController::class, 'get_cabang']);
 Route::get('outlet/{cabang}/{kondisi}/{premises}', [DashboardController::class, 'get_outlet']);
@@ -55,4 +56,8 @@ Route::get('load_datatable', [DashboardController::class, 'load_datatable']);
 Route::get('load_report', [DashboardController::class, 'load_report']);
 Route::post('get_detail', [DashboardController::class, 'get_detail']);
 Route::post('load_barchart', [DashboardController::class, 'load_barchart']);
-Route::post('load_barchart', [DashboardController::class, 'load_barchart']);
+
+Route::get('zip', [Export::class, 'toZip']);
+
+//---- Update 26 Agustus 2022 SMW Report
+Route::get('dashboard/smw/{email}/{password}', [DashboardController::class, 'dashboard_smw']);

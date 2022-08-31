@@ -88,9 +88,6 @@
                                     <img src="https://www.imgacademy.com/themes/custom/imgacademy/images/helpbox-contact.jpg"
                                         alt="thumbnail" class="rounded-circle"
                                         style="width: 100px;height: 100px; object-fit: cover;" id="img">
-                                    <div class="form-group d-none" id="inputImgWrap">
-                                        <input type="file" class="form-control" id="inputImg" name="image">
-                                    </div>
                                 </div>
                                 <br>
                                 <input type="hidden" name="id" id="id">

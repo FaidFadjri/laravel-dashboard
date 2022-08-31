@@ -3,7 +3,6 @@
 @section('content')
     <script src="https://cdn.datatables.net/fixedheader/3.2.4/js/dataTables.fixedHeader.min.js"></script>
     <script src="https://cdn.datatables.net/responsive/2.3.0/js/dataTables.responsive.min.js"></script>
-
     <div class="container-fluid">
 
         <form action="/export" method="POST">
@@ -23,31 +22,32 @@
                     <input type="hidden" class="form-control" id="parameter_outlet"
                         value="{{ isset($outlet) ? $outlet : '' }}" readonly>
                 </div>
-                <div class="col-sm-12 col-md-6 mb-2">
-                    <input type="date" class="form-control rounded" id="date">
-                </div>
-                <div class="col-sm-12 col-md-6">
-                    <select name="wilayah" class="form-control" required>
-                        <option value="">Export Wilayah</option>
-                        @foreach ($wilayah as $item)
-                            <option value="{{ $item->wilayah }}">{{ $item->wilayah }}</option>
-                        @endforeach
-                    </select>
+                <div class="col-sm-12 col-md-6 col-lg-6">
+                    <div class="form-group">
+                        <label for="startDate">Sejak Tanggal</label>
+                        <input type="date" id="startDate" name="startDate" class="form-control mt-1" required>
+                    </div>
                 </div>
                 <div class="col-sm-12 col-md-6 col-lg-6">
-                    <select name="year" id="year" class="form-control rounded" required>
-                        <option value="">All Years</option>
-                        @foreach ($year as $row)
-                            <option value="{{ $row }}">{{ $row }}</option>
-                        @endforeach
-                    </select>
+                    <div class="form-group">
+                        <label for="endDate">Sampai Tanggal</label>
+                        <input type="date" id="endDate" name="endDate" class="form-control mt-1" required>
+                    </div>
                 </div>
-                <div class="col-sm-12 col-md-6 col-lg-6">
-                    <select name="month" id="month" class="form-control rounded" required>
-                        <option value="">All Months</option>
-                        @foreach ($month as $index => $row)
-                            <option value="{{ $numberOfMonth[$index] }}">{{ $row }}</option>
-                        @endforeach
+
+                <div class="col-sm-12 mt-2 col-md-12">
+                    <select name="wilayah" id="filterWilayah" class="form-control" required>
+                        <?php $user = json_decode(session()->get('user')); ?>
+                        @if ($user->role == 'Pusat')
+                            <option value="">Export Wilayah</option>
+                            @foreach ($wilayah as $item)
+                                <option value="{{ $item->wilayah }}">{{ $item->wilayah }}</option>
+                            @endforeach
+                        @else
+                            @foreach ($wilayah as $item)
+                                <option value="{{ $item->wilayah }}">{{ $item->wilayah }}</option>
+                            @endforeach
+                        @endif
                     </select>
                 </div>
             </div>
@@ -80,7 +80,7 @@
             <div class="modal-content">
                 <div class="modal-header border-0">
                     <h5 class="modal-title" id="exampleModalLabel">Premises Detail</h5>
-                    <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <button type="button" class="close dismis-modal" data-dismiss="modal" aria-label="Close">
                         <span aria-hidden="true">&times;</span>
                     </button>
                 </div>
@@ -149,7 +149,8 @@
                     </div>
                 </div>
                 <div class="modal-footer border-0">
-                    <button type="button" class="btn btn-primary" data-dismiss="modal">Sembunyikan</button>
+                    <button type="button" class="btn btn-primary dismis-modal"
+                        data-dismiss="evidenceModal">Sembunyikan</button>
                 </div>
             </div>
         </div>
@@ -160,6 +161,11 @@
 
 @section('script')
     <script type="text/javascript">
+        $('.dismis-modal').click(function(e) {
+            e.preventDefault();
+            $("#evidenceModal").modal('hide');
+        });
+
         $(document).ready(function() {
             var table = $('#checksheetTable').DataTable({
                 processing: true,
@@ -172,12 +178,12 @@
                 ajax: {
                     url: '/load_report',
                     data: function(d) {
-                        d.date = $('#date').val();
+                        d.startDate = $('#startDate').val();
+                        d.endDate = $('#endDate').val();
+                        d.wilayah = $('#filterWilayah').val();
                         d.parameter_premises = $('#parameter_premises').val();
                         d.parameter_kondisi = $('#parameter_kondisi').val();
                         d.parameter_outlet = $('#parameter_outlet').val();
-                        d.year = $('#year').val();
-                        d.month = $('#month').val();
                     }
                 },
                 columns: [{
@@ -215,7 +221,7 @@
                 ],
             });
 
-            $('#date, #year, #month').change(function(e) {
+            $('#startDate, #endDate, #filterWilayah').change(function(e) {
                 e.preventDefault();
                 table.draw();
             });

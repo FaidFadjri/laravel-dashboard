@@ -40,12 +40,17 @@
     </script>
     <script src="//cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
+
+
     {{-- Datatables --}}
     <script src="https://cdn.datatables.net/1.12.1/js/jquery.dataTables.min.js"></script>
     <script src="https://cdn.datatables.net/1.12.1/js/dataTables.bootstrap4.min.js"></script>
     <script src="https://cdn.datatables.net/fixedheader/3.2.4/js/dataTables.fixedHeader.min.js"></script>
     <link rel="stylesheet" href="https://cdn.datatables.net/1.12.1/css/dataTables.bootstrap4.min.css">
     <link rel="stylesheet" href="https://cdn.datatables.net/fixedheader/3.2.4/css/fixedHeader.bootstrap4.min.css">
+
+    <script src="/assets/js/bundle.js"></script>
+    <script src="/assets/js/scripts.js"></script>
 </head>
 
 <body class="nk-body bg-lighter ">
@@ -90,26 +95,31 @@
                                     </div>
                                 </div>
                                 <ul class="nk-menu nk-menu-main ui-s2">
+                                    <?php $user = json_decode(session()->get('user')); ?>
                                     <li class="nk-menu-item {{ $active == 'dashboard' ? 'active' : '' }}">
                                         <a href="/" class="nk-menu-link">
                                             <span class="nk-menu-text">Dashboard</span>
                                         </a>
                                     </li>
-                                    <li class="nk-menu-item {{ $active == 'datatable' ? 'active' : '' }}">
-                                        <a href="{{ url('datatable') }}" class="nk-menu-link">
-                                            <span class="nk-menu-text">Datatable</span>
-                                        </a>
-                                    </li>
+                                    @if ($user->role == 'Pusat')
+                                        <li class="nk-menu-item {{ $active == 'datatable' ? 'active' : '' }}">
+                                            <a href="{{ url('datatable') }}" class="nk-menu-link">
+                                                <span class="nk-menu-text">Datatable</span>
+                                            </a>
+                                        </li>
+                                    @endif
                                     <li class="nk-menu-item {{ $active == 'report' ? 'active' : '' }}">
                                         <a href="{{ url('report') }}" class="nk-menu-link">
                                             <span class="nk-menu-text">Report</span>
                                         </a>
                                     </li>
-                                    <li class="nk-menu-item {{ $active == 'user' ? 'active' : '' }}">
-                                        <a href="{{ url('user') }}" class="nk-menu-link">
-                                            <span class="nk-menu-text">User Management</span>
-                                        </a>
-                                    </li>
+                                    @if ($user->role == 'Pusat')
+                                        <li class="nk-menu-item {{ $active == 'user' ? 'active' : '' }}">
+                                            <a href="{{ url('user') }}" class="nk-menu-link">
+                                                <span class="nk-menu-text">User Management</span>
+                                            </a>
+                                        </li>
+                                    @endif
                                 </ul><!-- .nk-menu -->
                             </div><!-- .nk-header-menu -->
                             <div class="nk-header-tools">
@@ -117,45 +127,13 @@
 
                                     <li class="dropdown user-dropdown">
                                         <a href="/logout" class="dropdown-toggle gap-2" data-bs-toggle="dropdown">
-                                            Logout
-                                            <div class="user-toggle">
-                                                <div class="user-avatar sm">
-                                                    <em class="icon ni ni-user-alt"></em>
-                                                </div>
-                                            </div>
+                                            Keluar
                                         </a>
                                         <div
                                             class="dropdown-menu dropdown-menu-md dropdown-menu-end dropdown-menu-s1 is-light">
-                                            <div class="dropdown-inner user-card-wrap bg-lighter d-none d-md-block">
-                                                <div class="user-card">
-                                                    <div class="user-avatar">
-                                                        <span>AB</span>
-                                                    </div>
-                                                    <div class="user-info">
-                                                        <span class="lead-text">Admin</span>
-                                                        <span class="sub-text">admin@gmail.com</span>
-                                                    </div>
-                                                    <div class="user-action">
-                                                        <a class="btn btn-icon me-n2"
-                                                            href="html/user-profile-setting.html"><em
-                                                                class="icon ni ni-setting"></em></a>
-                                                    </div>
-                                                </div>
-                                            </div>
                                             <div class="dropdown-inner">
                                                 <ul class="link-list">
-                                                    <li><a href="html/user-profile-setting.html"><em
-                                                                class="icon ni ni-setting-alt"></em><span>Account
-                                                                Setting</span></a></li>
-                                                    <li><a href="html/user-profile-activity.html"><em
-                                                                class="icon ni ni-activity-alt"></em><span>Login
-                                                                Activity</span></a></li>
-                                                </ul>
-                                            </div>
-                                            <div class="dropdown-inner">
-                                                <ul class="link-list">
-                                                    <li><a href="#"><em
-                                                                class="icon ni ni-signout"></em><span>Sign
+                                                    <li><a href="/logout"><em class="icon ni ni-signout"></em><span>Sign
                                                                 out</span></a></li>
                                                 </ul>
                                             </div>

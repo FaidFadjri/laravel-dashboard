@@ -158,8 +158,6 @@ class UserController extends Controller
 
     public function _saveUser()
     {
-
-        $POST_URL   = "http://localhost:8080/api/upload/image/asdasodihaosdihaiosdhoasdhohdiohaosdhoashdoasdhsad";
         $user     = UsersModel::findOrFail($_POST['id']);
 
         $data = [
@@ -170,23 +168,10 @@ class UserController extends Controller
         ];
 
 
-        if (request()->file('image')) {
-            $oldImage = UsersModel::select('foto')->where('id', '=', $_POST['id'])->get()->first()['foto'];
-            $file =  request()->file('image');
-            $newName = $file->getFilename();
-            $data['foto'] = $newName;
-
-            if ($oldImage) {
-                //------ Hapus atau unlink image
-                Http::get('http://localhost:8080/api/unlink/image/' . $oldImage . '/asdasodihaosdihaiosdhoasdhohdiohaosdhoashdoasdhsad');
+        if (isset($_POST['detailRole'])) {
+            if ($_POST['detailRole']) {
+                $data['role'] = $_POST['detailRole'];
             }
-
-            $response = Http::post($POST_URL, [
-                'userId' => $_POST['id'],
-                'image' => Storage::get('assets/people.JPG'),
-            ]);
-
-            dd($response);
         }
 
 

@@ -14,6 +14,10 @@ use DateTime;
 class DashboardController extends Controller
 {
 
+    function test()
+    {
+    }
+
     //--------- Auth
     public function login()
     {
@@ -33,7 +37,9 @@ class DashboardController extends Controller
         $password = $_POST['password'];
 
         # cek email
-        $user = DB::table('tb_user')->select('*')->where('email', '=', $email)->where('role', '=', 'Pusat')->where('is_verify', '=', 'verified')->get()->first();
+        $user = DB::table('tb_user')->select('*')->where('email', '=', $email)->where(function ($query) {
+            $query->where('role', '=', 'Smw')->orWhere('role', '=', 'Pusat');
+        })->where('is_verify', '=', 'verified')->get()->first();
         if (!$user) {
             return response()->json('Email tidak ditemukan', 404);
         } else {
@@ -45,10 +51,11 @@ class DashboardController extends Controller
 
                 # simpan session
                 $data = [
-                    'nama'  => $user->nama,
-                    'role'  => $user->role,
-                    'email' => $email,
-                    'pass'  => $password
+                    'nama'    => $user->nama,
+                    'role'    => $user->role,
+                    'email'   => $email,
+                    'pass'    => $password,
+                    'wilayah' => $user->wilayah
                 ];
                 Session::put('user', json_encode($data));
                 return response()->json('Login Success', 200);
@@ -74,8 +81,8 @@ class DashboardController extends Controller
             $premises = request()->get('premises');
 
             $currentMonthData = DB::table('tb_checksheet')->select('*')
-                ->where('created_at', '>=', $startDate)
-                ->where('created_at', '<=', $endDate)
+                ->whereDate('created_at', '>=', $startDate)
+                ->whereDate('created_at', '<=', $endDate)
                 ->where('premises', $premises)
                 ->orderBy('created_at')
                 ->where('verifikasi', 'closing')
@@ -148,8 +155,8 @@ class DashboardController extends Controller
                 ->select('*')
                 ->where('kondisi', '=', $kondisi)
                 ->where('premises', '=', $premises)
-                ->where('created_at', '>=', $startDate)
-                ->where('created_at', '<=', $endDate)
+                ->whereDate('created_at', '>=', $startDate)
+                ->whereDate('created_at', '<=', $endDate)
                 ->where('verifikasi', 'closing')
                 ->get()->toArray();
 
@@ -185,16 +192,17 @@ class DashboardController extends Controller
             ->select('*')
             ->where('kondisi', '=', $kondisi)
             ->where('premises', '=', $premises)
-            ->where('created_at', '>=', $startDate)
-            ->where('created_at', '<=', $endDate)
+            ->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate)
+            ->where('verifikasi', '=', 'closing')
             ->get()->toArray();
         $getCabang   = DB::table('tb_outlet')->select('*')->where('wilayah', '=', $wilayah)->groupBy('cabang')->get()->toArray();
         $data = array();
         foreach ($getCabang as $index => $value) {
             $resultGroupBy = array_keys(array_keys(array_combine(array_keys($checksheet), array_column($checksheet, 'cabang')), $getCabang[$index]->outlet));
             $data[$index] = [
-                'cabang' => $getCabang[$index]->cabang,
-                'label'  => $getCabang[$index]->outlet,
+                'cabang' => $value->cabang,
+                'label'  => $value->outlet,
                 'value'  => sizeof($resultGroupBy)
             ];
         }
@@ -215,8 +223,8 @@ class DashboardController extends Controller
             ->select('*')
             ->where('kondisi', '=', $kondisi)
             ->where('premises', '=', $premises)
-            ->where('created_at', '>=', $startDate)
-            ->where('created_at', '<=', $endDate)
+            ->whereDate('created_at', '>=', $startDate)
+            ->whereDate('created_at', '<=', $endDate)
             ->where('verifikasi', 'closing')
             ->get()->toArray();
 
@@ -273,7 +281,14 @@ class DashboardController extends Controller
         $numberOfMonth = $getMonth->pluck('month')->toArray();
         $existingMonth = array();
 
-        $wilayah       = DB::table('tb_outlet')->select('wilayah')->where('wilayah', '!=', 'wilayah')->orderBy('wilayah', 'ASC')->distinct()->get()->toArray();
+        $wilayah       = DB::table('tb_outlet')->select('wilayah')->where('wilayah', '!=', 'wilayah');
+        $user          = json_decode(session()->get('user'));
+        if ($user) {
+            if ($user->role == 'Smw') {
+                $wilayah->where('wilayah', '=', $user->wilayah);
+            }
+        }
+        $wilayah->orderBy('wilayah', 'ASC')->distinct();
 
         foreach ($numberOfMonth as $key) {
             $dateObj   = DateTime::createFromFormat('!m', $key);
@@ -286,7 +301,7 @@ class DashboardController extends Controller
             'year'          => $existingYear,
             'month'         => $existingMonth,
             'numberOfMonth' => $numberOfMonth,
-            'wilayah'       => $wilayah
+            'wilayah'       => $wilayah->get()->toArray()
         ];
 
         return view('pages.report', $components);
@@ -373,7 +388,6 @@ class DashboardController extends Controller
     public function load_report()
     {
 
-        $date               = request()->get('date');
         $parameter_premises = request()->get('parameter_premises');
         $parameter_kondisi  = request()->get('parameter_kondisi');
         $parameter_outlet   = request()->get('parameter_outlet');
@@ -382,22 +396,32 @@ class DashboardController extends Controller
         $data = DB::table('tb_checksheet')->select(array('img', 'kondisi_smw', 'catatan_smw', 'nama_smw', 'nama_pusat', 'catatan_pusat', 'tb_checksheet.id', 'wilayah', 'cabang', 'outlet', 'premises', 'kategori', 'kondisi', 'verifikasi', DB::raw('DATE(created_at) AS submitDate')))
             ->join('tb_user', 'tb_checksheet.id_user', '=', 'tb_user.id');
 
-        if ($date) {
-            $data->where('created_at', '>=', $date);
-        }
-
-        // Pengecekan parameter tahun dan bulan
-        if (request()->has('year')) {
-            $year = request()->get('year');
-            if ($year) {
-                $data->whereYear('created_at', '=', $year);
+        if (request()->has('startDate')) {
+            $startDate = request()->get('startDate');
+            if ($startDate) {
+                $data->whereDate('created_at', '>=', $startDate);
             }
         }
 
-        if (request()->has('month')) {
-            $month = request()->get('month');
-            if ($month) {
-                $data->whereMonth('created_at', '=', $month);
+        if (request()->has('endDate')) {
+            $endDate = request()->get('endDate');
+            if ($endDate) {
+                $data->whereDate('created_at', '<=', $endDate);
+            }
+        }
+
+        if (request()->has('wilayah')) {
+            $wilayah = request()->get('wilayah');
+            if ($wilayah) {
+                $data->where('wilayah', $wilayah);
+            }
+        }
+
+
+        $user          = json_decode(session()->get('user'));
+        if ($user) {
+            if ($user->role == 'Smw') {
+                $data->where('wilayah', '=', $user->wilayah);
             }
         }
 
@@ -441,6 +465,33 @@ class DashboardController extends Controller
                 'id'        => $checkId,
                 'evidence'  => $evidence
             ));
+        }
+    }
+
+
+    public function dashboard_smw($email, $password)
+    {
+        # cek user apakah ada atau tidak
+        $user = DB::table('tb_user')->select('*')->where('email', $email)->where('role', 'Smw')->get()->first();
+        if (!$user) {
+            return redirect()->to('/');
+        } else {
+            # verifikasi password
+            $verify = password_verify($password, $user->password);
+            if (!$verify) {
+                return redirect()->to('/');
+            } else {
+                # simpan session
+                $data = [
+                    'nama'    => $user->nama,
+                    'role'    => $user->role,
+                    'email'   => $email,
+                    'pass'    => $password,
+                    'wilayah' => $user->wilayah
+                ];
+                Session::put('user', json_encode($data));
+                return redirect()->to('/');
+            }
         }
     }
 

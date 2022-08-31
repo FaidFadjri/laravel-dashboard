@@ -148,6 +148,7 @@
                         dataType: "json",
                         success: function(response) {
                             const data = response.data;
+                            console.log(data);
                             showBar(premises, category, data, color);
                         }
                     });
@@ -282,6 +283,14 @@
                     return chart.get("colors").getIndex(series.columns.indexOf(target));
                 });
                 chart.get("colors").set("colors", [
+                    am5.color(color),
+                    am5.color(color),
+                    am5.color(color),
+                    am5.color(color),
+                    am5.color(color),
+                    am5.color(color),
+                    am5.color(color),
+                    am5.color(color),
                     am5.color(color),
                 ]);
 
