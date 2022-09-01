@@ -9,6 +9,7 @@
             @csrf
             <div class="row mt-4">
                 <div class="col-12 text-end">
+                    <button class="btn btn-primary evidence-btn" type="button">Download Evidence</button>
                     <button class="btn btn-primary" type="submit">Export Excel</button>
                 </div>
             </div>
@@ -156,10 +157,134 @@
         </div>
     </div>
 
+
+
+    <div class="modal fade" tabindex="-1" role="dialog" id="downloadEvidenceModal">
+        <div class="modal-dialog modal-lg" role="document">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Download Evidence Bulan {{ date('F Y') }}</h5>
+                    <button type="button" class="close close-evidence" data-dismiss="modal" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                </div>
+                <form action="/zip" method="POST" id="download-evidence-form">
+                    @csrf
+                    <div class="modal-body">
+                        <form action="">
+                            <div class="form-group">
+                                <label for="ev-wilayah">Wilayah</label>
+                                <select name="wilayah" id="ev-wilayah" class="form-control mt-1">
+                                    <option value=""> Pilih Wilayah </option>
+                                    @foreach ($wilayah as $item)
+                                        <option value="{{ $item->wilayah }}">{{ $item->wilayah }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="ev-cabang">Cabang</label>
+                                <select name="cabang" id="ev-cabang" class="form-control mt-1">
+                                    <option value=""> Pilih Cabang </option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="ev-wilayah">Outlet</label>
+                                <select name="outlet" id="ev-outlet" class="form-control mt-1">
+                                    <option value=""> Pilih Outlet </option>
+                                </select>
+                            </div>
+                        </form>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary close-evidence"
+                            data-dismiss="modal">Close</button>
+                        <button type="submit" class="btn btn-primary submit-download">Download</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <link rel="stylesheet" href="/assets/css/datatable.css">
 @endsection
 
 @section('script')
+    <script>
+        $(document).on('click', '.submit-download', () => {
+            $("#download-evidence-form").submit();
+        })
+
+        $(document).on('click', '.evidence-btn', () => {
+            $("#downloadEvidenceModal").modal('show');
+        })
+        $(document).on('click', '.close-evidence', () => {
+            $("#downloadEvidenceModal").modal('hide');
+        })
+
+        $('#ev-wilayah').change(function(e) {
+            e.preventDefault();
+            var wilayah = $(this).val();
+
+            load_cabang(wilayah, 'ev-cabang');
+        });
+
+        $('#ev-cabang').change(function(e) {
+            e.preventDefault();
+            var cabang = $(this).val();
+
+            load_outlet(cabang, 'ev-outlet');
+        });
+
+
+        function load_cabang(wilayah, cabangComponents) {
+            $.ajax({
+                type: "POST",
+                url: "{{ url('load_cabang') }}",
+                data: {
+                    wilayah: wilayah
+                },
+                dataType: "json",
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+                success: function(response) {
+                    var html = '<option value="">Semua Cabang</option>';
+                    response.forEach(element => {
+                        html += `<option value="${element['cabang']}"> ${element['outlet']} </option>`
+                    });
+
+                    $(`#${cabangComponents}`).html(html);
+
+                    refreshTable();
+                }
+            });
+        }
+
+        function load_outlet(cabang, outletComponent) {
+            $.ajax({
+                type: "POST",
+                url: "{{ url('load_outlet') }}",
+                data: {
+                    cabang: cabang
+                },
+                dataType: "json",
+                headers: {
+                    'X-CSRF-Token': '{{ csrf_token() }}',
+                },
+                success: function(response) {
+                    console.log(response);
+                    var html = '<option value="">Semua Outlet</option>';
+                    response.forEach(element => {
+                        html += `<option value="${element['outlet']}"> ${element['outlet']} </option>`
+                    });
+
+                    $(`#${outletComponent}`).html(html);
+                    refreshTable();
+                }
+            });
+        }
+    </script>
+
     <script type="text/javascript">
         $('.dismis-modal').click(function(e) {
             e.preventDefault();

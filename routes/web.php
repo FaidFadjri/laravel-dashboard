@@ -58,6 +58,7 @@ Route::post('get_detail', [DashboardController::class, 'get_detail']);
 Route::post('load_barchart', [DashboardController::class, 'load_barchart']);
 
 Route::get('zip', [Export::class, 'toZip']);
+Route::post('zip', [Export::class, 'toZip']);
 
 //---- Update 26 Agustus 2022 SMW Report
 Route::get('dashboard/smw/{email}/{password}', [DashboardController::class, 'dashboard_smw']);
